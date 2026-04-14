@@ -1,20 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolinked/configs/theme/app_theme.dart';
+import 'package:geolinked/configs/providers/theme_provider.dart';
+import 'package:geolinked/feature/home/home_screen.dart';
+import 'package:geolinked/feature/splash/splash_screen.dart';
+import 'package:geolinked/utils/routes.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(const ProviderScope(child: MainApp()));
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends ConsumerWidget {
   const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
-      ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
+      initialRoute: AppRoutes.splash,
+      routes: <String, WidgetBuilder>{
+        AppRoutes.splash: (_) => const SplashScreen(),
+        AppRoutes.home: (_) => const HomeScreen(),
+      },
     );
   }
 }
