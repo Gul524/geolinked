@@ -67,7 +67,7 @@ class SignupScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 20),
                     CustomButtonWidget(
-                      label: 'Continue  ->',
+                      label: 'Continue',
                       onPressed: () => controller.onSignupPressed(context),
                     ),
                   ],

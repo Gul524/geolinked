@@ -45,7 +45,7 @@ class OtpVerificationScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 20),
                     CustomButtonWidget(
-                      label: 'Verify & Create Account  ->',
+                      label: 'Verify & Create Account',
                       onPressed: () =>
                           controller.onVerifyPressed(context, email: email),
                     ),

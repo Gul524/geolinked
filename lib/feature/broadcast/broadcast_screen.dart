@@ -1,6 +1,6 @@
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/feature/broadcast/broadcast_controller.dart';
-import 'package:geolinked/feature/broadcast/broadcast_discussion_screen.dart';
+import 'package:geolinked/feature/broadcast/broadcast_sheet/broadcast_sheet.dart';
 import 'package:geolinked/feature/broadcast/widgets/broadcast_header_widget.dart';
 import 'package:geolinked/feature/broadcast/widgets/broadcast_list_item_widget.dart';
 
@@ -22,7 +22,20 @@ class BroadcastScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: <Widget>[
-            BroadcastHeaderWidget(subtitle: controller.subtitle),
+            BroadcastHeaderWidget(
+              subtitle: controller.subtitle,
+              onCreatePressed: () async {
+                final result = await BroadcastSheet.showSheet(context);
+                if (!context.mounted || result == null) {
+                  return;
+                }
+
+                AppMessaging.showSuccess(
+                  context,
+                  '${result.category} broadcast shared in ${result.radiusMeters}m radius.',
+                );
+              },
+            ),
             const SizedBox(height: 2),
             Expanded(
               child: ListView.separated(

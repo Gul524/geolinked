@@ -69,7 +69,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ),
               const SizedBox(height: 16),
               CustomButtonWidget(
-                label: isLastPage ? 'Get Started  ->' : 'Continue  ->',
+                label: isLastPage ? 'Get Started' : 'Continue',
                 onPressed: () =>
                     controller.onContinuePressed(context, state.currentPage),
               ),

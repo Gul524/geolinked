@@ -1,6 +1,6 @@
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/feature/ask/ask_controller.dart';
-import 'package:geolinked/feature/ask/ask_discussion_screen.dart';
+import 'package:geolinked/feature/ask/ask_sheet/ask_sheet.dart';
 import 'package:geolinked/feature/ask/widgets/ask_history_header_widget.dart';
 import 'package:geolinked/feature/ask/widgets/ask_history_item_widget.dart';
 
@@ -20,7 +20,20 @@ class AskScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: <Widget>[
-            AskHistoryHeaderWidget(subtitle: controller.subtitle),
+            AskHistoryHeaderWidget(
+              subtitle: controller.subtitle,
+              onCreatePressed: () async {
+                final result = await AskSheet.showSheet(context);
+                if (!context.mounted || result == null) {
+                  return;
+                }
+
+                AppMessaging.showSuccess(
+                  context,
+                  'Query submitted for ${result.radiusMeters}m nearby people.',
+                );
+              },
+            ),
             Expanded(
               child: ListView.separated(
                 itemCount: state.items.length,

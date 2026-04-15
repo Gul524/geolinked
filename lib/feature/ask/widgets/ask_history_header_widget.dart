@@ -1,9 +1,14 @@
 import 'package:geolinked/utils/app_exports.dart';
 
 class AskHistoryHeaderWidget extends StatelessWidget {
-  const AskHistoryHeaderWidget({required this.subtitle, super.key});
+  const AskHistoryHeaderWidget({
+    required this.subtitle,
+    this.onCreatePressed,
+    super.key,
+  });
 
   final String subtitle;
+  final VoidCallback? onCreatePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -12,11 +17,32 @@ class AskHistoryHeaderWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            'Ask History',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  'Ask History',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: onCreatePressed,
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.primary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
+                label: const Text('Ask New'),
+              ),
+            ],
           ),
           const SizedBox(height: 2),
           Text(

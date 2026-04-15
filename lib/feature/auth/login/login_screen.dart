@@ -50,7 +50,7 @@ class LoginScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 20),
                     CustomButtonWidget(
-                      label: 'Login  ->',
+                      label: 'Login',
                       onPressed: () => controller.onLoginPressed(context),
                     ),
                   ],

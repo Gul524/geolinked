@@ -44,7 +44,10 @@ class CustomDropdown<T> extends StatelessWidget {
               .map(
                 (T item) => DropdownMenuItem<T>(
                   value: item,
-                  child: Text(itemBuilder(item)),
+                  child: Text(
+                    itemBuilder(item),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                 ),
               )
               .toList(),
