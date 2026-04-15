@@ -4,9 +4,15 @@ import 'package:geolinked/configs/theme/app_theme.dart';
 import 'package:geolinked/configs/providers/theme_provider.dart';
 import 'package:geolinked/feature/home/home_screen.dart';
 import 'package:geolinked/feature/splash/splash_screen.dart';
+import 'package:geolinked/services/local_storage_service.dart';
+import 'package:geolinked/services/notification_service.dart';
 import 'package:geolinked/utils/routes.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await LocalStorageService.instance.init();
+  await NotificationService.instance.initialize();
+
   runApp(const ProviderScope(child: MainApp()));
 }
 

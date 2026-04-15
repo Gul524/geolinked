@@ -3,4 +3,7 @@ export '../feature/home/home_screen.dart';
 export '../feature/splash/splash_controller.dart';
 export '../feature/splash/splash_screen.dart';
 export '../feature/splash/widgets/splash_brand_animation_widget.dart';
+export '../services/api_service.dart';
+export '../services/local_storage_service.dart';
+export '../services/notification_service.dart';
 export '../shared/widgets/custom_bottom_navigation_bar.dart';
