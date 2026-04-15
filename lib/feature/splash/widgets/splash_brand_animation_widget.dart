@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:geolinked/utils/app_exports.dart';
 
 class SplashBrandAnimationWidget extends StatefulWidget {
   const SplashBrandAnimationWidget({

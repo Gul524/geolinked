@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/feature/splash/splash_controller.dart';
 import 'package:geolinked/feature/splash/widgets/splash_brand_animation_widget.dart';
 
@@ -17,7 +16,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(splashControllerProvider).initialize(context);
+      ref.read(splashControllerProvider.notifier).initialize(context);
     });
   }
 

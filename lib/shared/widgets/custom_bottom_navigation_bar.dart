@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:geolinked/utils/app_exports.dart';
 
 class CustomBottomNavigationItem {
   const CustomBottomNavigationItem({
@@ -20,6 +20,7 @@ class BottomNavRoundIcon extends StatelessWidget {
   const BottomNavRoundIcon({
     required this.icon,
     required this.selected,
+    required this.primary,
     required this.activeColor,
     required this.inactiveColor,
     super.key,
@@ -27,6 +28,7 @@ class BottomNavRoundIcon extends StatelessWidget {
 
   final IconData icon;
   final bool selected;
+  final Color primary;
   final Color activeColor;
   final Color inactiveColor;
 
@@ -35,13 +37,11 @@ class BottomNavRoundIcon extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOutCubic,
-      width: 24,
+      width: 30,
       height: 24,
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: selected
-            ? activeColor.withValues(alpha: 0.14)
-            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        color: selected ? primary.withValues(alpha: 0.14) : Colors.transparent,
       ),
       child: Icon(
         icon,
@@ -107,6 +107,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
                             BottomNavRoundIcon(
                               icon: item.icon,
                               selected: selected,
+                              primary: primary,
                               activeColor: iconActiveColor,
                               inactiveColor: iconInactiveColor,
                             ),

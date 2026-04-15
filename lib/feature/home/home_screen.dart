@@ -1,17 +1,41 @@
-import 'package:flutter/material.dart';
-import 'package:geolinked/shared/widgets/custom_bottom_navigation_bar.dart';
+import 'package:geolinked/utils/app_exports.dart';
+import 'package:geolinked/feature/ask/ask_screen.dart';
+import 'package:geolinked/feature/broadcast/broadcast_screen.dart';
+import 'package:geolinked/feature/home/home_controller.dart';
+import 'package:geolinked/feature/profile/profile_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   static const String routeName = '/home';
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final HomeState state = ref.watch(homeControllerProvider);
+    final HomeController controller = ref.read(homeControllerProvider.notifier);
 
-class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 2;
+    final primary = Theme.of(context).colorScheme.primary;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final surface = Theme.of(context).colorScheme.surface;
+
+    return Scaffold(
+      backgroundColor: surface,
+      body: IndexedStack(
+        index: state.currentIndex,
+        children: <Widget>[
+          _TabPlaceholder(title: 'Map', primary: primary, onSurface: onSurface),
+          const AskScreen(),
+          const BroadcastScreen(),
+          const ProfileScreen(),
+        ],
+      ),
+      bottomNavigationBar: CustomBottomNavigationBar(
+        items: _items,
+        currentIndex: state.currentIndex,
+        onTap: controller.setCurrentIndex,
+      ),
+    );
+  }
 
   static const List<CustomBottomNavigationItem> _items =
       <CustomBottomNavigationItem>[
@@ -21,12 +45,12 @@ class _HomeScreenState extends State<HomeScreen> {
           activeColor: Color(0xFF12B3B6),
         ),
         CustomBottomNavigationItem(
-          icon: Icons.question_answer_outlined,
+          icon: Icons.mode_comment_outlined,
           label: 'Ask History',
           activeColor: Color(0xFF7A7F88),
         ),
         CustomBottomNavigationItem(
-          icon: Icons.campaign_outlined,
+          icon: Icons.wifi_tethering_outlined,
           label: 'Broadcasts',
           activeColor: Color(0xFF007AFF),
         ),
@@ -36,47 +60,6 @@ class _HomeScreenState extends State<HomeScreen> {
           activeColor: Color(0xFF2F80ED),
         ),
       ];
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    final onSurface = Theme.of(context).colorScheme.onSurface;
-    final surface = Theme.of(context).colorScheme.surface;
-
-    return Scaffold(
-      backgroundColor: surface,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: <Widget>[
-          _TabPlaceholder(title: 'Map', primary: primary, onSurface: onSurface),
-          _TabPlaceholder(
-            title: 'Ask History',
-            primary: primary,
-            onSurface: onSurface,
-          ),
-          _TabPlaceholder(
-            title: 'Broadcasts',
-            primary: primary,
-            onSurface: onSurface,
-          ),
-          _TabPlaceholder(
-            title: 'Profile',
-            primary: primary,
-            onSurface: onSurface,
-          ),
-        ],
-      ),
-      bottomNavigationBar: CustomBottomNavigationBar(
-        items: _items,
-        currentIndex: _currentIndex,
-        onTap: (int index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-      ),
-    );
-  }
 }
 
 class _TabPlaceholder extends StatelessWidget {
