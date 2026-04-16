@@ -1,6 +1,5 @@
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/feature/auth/login/login_controller.dart';
-import 'package:geolinked/feature/auth/widgets/auth_header_widget.dart';
 import 'package:geolinked/feature/auth/widgets/auth_switch_prompt_widget.dart';
 
 class LoginScreen extends ConsumerWidget {
@@ -15,54 +14,80 @@ class LoginScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(18, 22, 18, 16),
+      body: AuthShellWidget(
+        title: 'Welcome back\nLogin now!',
+        footer: AuthSwitchPromptWidget(
+          prefixText: 'Don\'t have an account?',
+          actionText: 'Sign up',
+          onTap: () {
+            Navigator.of(context).pushNamed(AppRoutes.signup);
+          },
+        ),
+        child: Form(
+          key: controller.formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              const AuthHeaderWidget(
-                title: 'Welcome Back',
-                subtitle: 'Login using your email and password.',
+              AppTextField(
+                label: 'Email',
+                hintText: 'johndoe@gmail.com',
+                controller: controller.emailController,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                validator: controller.validateEmail,
               ),
-              const SizedBox(height: 26),
-              Form(
-                key: controller.formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    AppTextField(
-                      label: 'Email',
-                      hintText: 'name@example.com',
-                      controller: controller.emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
-                      validator: controller.validateEmail,
-                    ),
-                    const SizedBox(height: 14),
-                    AppTextField(
-                      label: 'Password',
-                      hintText: 'Enter password',
-                      controller: controller.passwordController,
-                      isPasswordField: true,
-                      textInputAction: TextInputAction.done,
-                      validator: controller.validatePassword,
-                    ),
-                    const SizedBox(height: 20),
-                    CustomButtonWidget(
-                      label: 'Login',
-                      onPressed: () => controller.onLoginPressed(context),
-                    ),
-                  ],
-                ),
+              const SizedBox(height: 14),
+              AppTextField(
+                label: 'Password',
+                hintText: '********',
+                controller: controller.passwordController,
+                isPasswordField: true,
+                textInputAction: TextInputAction.done,
+                validator: controller.validatePassword,
               ),
-              const SizedBox(height: 18),
-              AuthSwitchPromptWidget(
-                prefixText: 'Don\'t have an account?',
-                actionText: 'Sign up',
-                onTap: () {
-                  Navigator.of(context).pushNamed(AppRoutes.signup);
-                },
+              const SizedBox(height: 10),
+              Row(
+                children: <Widget>[
+                  Checkbox(
+                    value: false,
+                    onChanged: (_) {},
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  const SizedBox(width: 2),
+                  Text(
+                    'Remember me',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.6),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () {},
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      'Forgot password?',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              CustomButtonWidget(
+                label: 'Login',
+                onPressed: () => controller.onLoginPressed(context),
               ),
             ],
           ),

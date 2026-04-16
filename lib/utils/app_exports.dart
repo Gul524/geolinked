@@ -31,6 +31,7 @@ export '../feature/home/home_screen.dart';
 export '../feature/auth/login/login_screen.dart';
 export '../feature/auth/signup/signup_screen.dart';
 export '../feature/auth/signup/otp_verification_screen.dart';
+export '../feature/auth/widgets/auth_shell_widget.dart';
 export '../feature/ask/ask_screen.dart';
 export '../feature/ask/ask_discussion_screen.dart';
 export '../feature/broadcast/broadcast_screen.dart';

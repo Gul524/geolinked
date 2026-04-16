@@ -33,6 +33,7 @@ export '../feature/auth/signup/signup_controller.dart';
 export '../feature/auth/signup/signup_screen.dart';
 export '../feature/auth/widgets/auth_header_widget.dart';
 export '../feature/auth/widgets/auth_switch_prompt_widget.dart';
+export '../feature/auth/widgets/auth_shell_widget.dart';
 
 // splash
 export '../feature/splash/splash_controller.dart';

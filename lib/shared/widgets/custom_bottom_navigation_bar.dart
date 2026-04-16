@@ -18,6 +18,7 @@ class CustomBottomNavigationItem {
 
 class BottomNavRoundIcon extends StatelessWidget {
   const BottomNavRoundIcon({
+    required this.label,
     required this.icon,
     required this.selected,
     required this.primary,
@@ -25,7 +26,7 @@ class BottomNavRoundIcon extends StatelessWidget {
     required this.inactiveColor,
     super.key,
   });
-
+  final String label;
   final IconData icon;
   final bool selected;
   final Color primary;
@@ -37,16 +38,29 @@ class BottomNavRoundIcon extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOutCubic,
-      width: 30,
-      height: 24,
+      width: 70,
+      height: 40,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
         color: selected ? primary.withValues(alpha: 0.14) : Colors.transparent,
       ),
-      child: Icon(
-        icon,
-        size: 15,
-        color: selected ? activeColor : inactiveColor,
+      child: Padding(
+        padding: const EdgeInsets.all(4.0),
+        child: Column(
+          children: [
+            Icon(icon, size: 15, color: selected ? activeColor : inactiveColor),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: selected ? activeColor : inactiveColor,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -90,8 +104,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
                   final selected = index == currentIndex;
                   final iconActiveColor = item.activeColor ?? primary;
                   final iconInactiveColor =
-                      item.inactiveColor ?? onSurface.withValues(alpha: 0.62);
-
+                      item.inactiveColor ?? onSurface.withValues(alpha: 0.7);
                   return Expanded(
                     child: InkWell(
                       borderRadius: BorderRadius.circular(10),
@@ -106,25 +119,11 @@ class CustomBottomNavigationBar extends StatelessWidget {
                           children: <Widget>[
                             BottomNavRoundIcon(
                               icon: item.icon,
+                              label: item.label,
                               selected: selected,
                               primary: primary,
                               activeColor: iconActiveColor,
                               inactiveColor: iconInactiveColor,
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              item.label,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.labelMedium
-                                  ?.copyWith(
-                                    color: selected
-                                        ? iconActiveColor
-                                        : onSurface.withValues(alpha: 0.62),
-                                    fontWeight: selected
-                                        ? FontWeight.w600
-                                        : FontWeight.w500,
-                                  ),
                             ),
                           ],
                         ),

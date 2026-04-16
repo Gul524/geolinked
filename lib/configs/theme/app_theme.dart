@@ -24,6 +24,19 @@ class AppImageSizes {
   const AppImageSizes._();
 }
 
+class AppIcons {
+  static const IconData home = Icons.home_rounded;
+  static const IconData search = Icons.search_rounded;
+  static const IconData notifications = Icons.notifications_rounded;
+  static const IconData profile = Icons.person_rounded;
+  static const IconData ask = Icons.question_mark_rounded;
+  static const IconData chat = Icons.message_rounded;
+  static const IconData broadcast = Icons.campaign_rounded;
+  static const IconData settings = Icons.settings_rounded;
+
+  const AppIcons._();
+}
+
 class AppTheme {
   // iOS system blue as the main app identity color.
   static const Color _lightPrimary = Color(0xFF007AFF);

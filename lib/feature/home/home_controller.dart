@@ -23,6 +23,12 @@ class HomeController extends Notifier<HomeState> {
 
     state = state.copyWith(currentIndex: index);
   }
+
+  void onAskPressed() {
+    
+  }
+
+  void onBroadcastPressed() {}
 }
 
 final homeControllerProvider = NotifierProvider<HomeController, HomeState>(

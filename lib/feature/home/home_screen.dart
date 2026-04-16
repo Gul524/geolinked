@@ -3,12 +3,13 @@ import 'package:geolinked/feature/home/home_controller.dart';
 import 'package:geolinked/feature/profile/profile_controller.dart';
 import 'package:geolinked/feature/ask/ask_sheet/ask_sheet.dart';
 import 'package:geolinked/feature/broadcast/broadcast_sheet/broadcast_sheet.dart';
-import 'package:geolinked/feature/home/widgets/home_map_widget.dart';
+import 'package:geolinked/feature/map/map_widget.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   static const String routeName = '/home';
+
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -60,26 +61,13 @@ class HomeScreen extends ConsumerWidget {
 
   static const List<CustomBottomNavigationItem> _items =
       <CustomBottomNavigationItem>[
+        CustomBottomNavigationItem(icon: AppIcons.home, label: 'Home'),
+        CustomBottomNavigationItem(icon: AppIcons.chat, label: 'Ask History'),
         CustomBottomNavigationItem(
-          icon: Icons.map_outlined,
-          label: 'Map',
-          activeColor: Color(0xFF12B3B6),
-        ),
-        CustomBottomNavigationItem(
-          icon: Icons.mode_comment_outlined,
-          label: 'Ask History',
-          activeColor: Color(0xFF7A7F88),
-        ),
-        CustomBottomNavigationItem(
-          icon: Icons.wifi_tethering_outlined,
+          icon: AppIcons.broadcast,
           label: 'Broadcasts',
-          activeColor: Color(0xFF007AFF),
         ),
-        CustomBottomNavigationItem(
-          icon: Icons.person_outline,
-          label: 'Profile',
-          activeColor: Color(0xFF2F80ED),
-        ),
+        CustomBottomNavigationItem(icon: AppIcons.profile, label: 'Profile'),
       ];
 }
 
@@ -98,23 +86,24 @@ class _FABColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           _FABButton(
             onPressed: onAskPressed,
             label: 'Ask',
             subtitle: '${profileState.askRadiusMeters.toStringAsFixed(0)}m',
-            icon: Icons.mode_comment_outlined,
-            color: const Color(0xFF7A7F88),
+            icon: AppIcons.ask,
+            color: Colors.red,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(height: 12),
           _FABButton(
             onPressed: onBroadcastPressed,
             label: 'Broadcast',
             subtitle: '${profileState.broadcastRadiusKm.toStringAsFixed(1)}km',
-            icon: Icons.wifi_tethering_outlined,
-            color: const Color(0xFF007AFF),
+            icon: AppIcons.broadcast,
+            color: Colors.blue,
           ),
         ],
       ),
@@ -139,33 +128,52 @@ class _FABButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FloatingActionButton.extended(
-      onPressed: onPressed,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 4,
-      backgroundColor: color.withValues(alpha: 0.1),
-      foregroundColor: color,
-      icon: Icon(icon, color: color),
-      label: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
+    final surface = Theme.of(context).colorScheme.surface;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    return InkWell(
+      onTap: onPressed,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: SizedBox.square(
+          dimension: 70,
+          child: Padding(
+            padding: const EdgeInsets.all(4.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(icon, size: AppIconSizes.medium, color: color),
+                SizedBox(height: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: Theme.of(context).textTheme.labelMedium?.fontSize,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                    color: onSurface,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
             ),
           ),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.3,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
