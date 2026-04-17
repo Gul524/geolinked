@@ -7,7 +7,6 @@ class GeoRadiusInfo {
   final LatLng centerPoint;
   final double radiusMeters;
 
-  /// Check if a given geopoint lies within this radius
   bool isWithinRadius(LatLng point) {
     final Distance distance = const Distance();
     final double distanceInMeters = distance.as(
@@ -18,7 +17,6 @@ class GeoRadiusInfo {
     return distanceInMeters <= radiusMeters;
   }
 
-  /// Get the distance from center to a geopoint in meters
   double getDistanceToPoint(LatLng point) {
     final Distance distance = const Distance();
     return distance.as(LengthUnit.Meter, centerPoint, point);
@@ -34,10 +32,6 @@ class GeoService {
     return _instance;
   }
 
-  /// Convert a LatLng geopoint to placemark
-  ///
-  /// Returns a Placemark containing address, city, street, etc.
-  /// Returns null if geocoding fails or service is unavailable.
   Future<Placemark?> geopointToPlacemark({required LatLng point}) async {
     try {
       final List<Placemark> placemarks = await placemarkFromCoordinates(
@@ -51,15 +45,10 @@ class GeoService {
 
       return placemarks.first;
     } catch (_) {
-      // Silently fail if geocoding is unavailable or request fails
       return null;
     }
   }
 
-  /// Get a readable location string from a LatLng geopoint
-  ///
-  /// Combines street, city, and country information
-  /// Returns a formatted address string or null if geocoding fails
   Future<String?> getLocationString({required LatLng point}) async {
     try {
       final Placemark? placemark = await geopointToPlacemark(point: point);
@@ -90,7 +79,27 @@ class GeoService {
 
       return addressParts.join(', ');
     } catch (_) {
-      // Silently fail if geocoding is unavailable or request fails
+      return null;
+    }
+  }
+
+  Future<List<Location>?> getPlaceString({required String query}) async {
+    try {
+      final String normalizedQuery = query.trim();
+      if (normalizedQuery.isEmpty) {
+        return null;
+      }
+
+      final List<Location> locations = await locationFromAddress(
+        normalizedQuery,
+      );
+
+      if (locations.isEmpty) {
+        return null;
+      }
+
+      return locations;
+    } catch (_) {
       return null;
     }
   }

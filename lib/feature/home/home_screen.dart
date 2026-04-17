@@ -1,15 +1,12 @@
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/feature/home/home_controller.dart';
 import 'package:geolinked/feature/profile/profile_controller.dart';
-import 'package:geolinked/feature/ask/ask_sheet/ask_sheet.dart';
-import 'package:geolinked/feature/broadcast/broadcast_sheet/broadcast_sheet.dart';
 import 'package:geolinked/feature/map/map_widget.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   static const String routeName = '/home';
-
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -33,22 +30,8 @@ class HomeScreen extends ConsumerWidget {
       floatingActionButton: state.currentIndex == 0
           ? _FABColumn(
               profileState: profileState,
-              onAskPressed: () async {
-                final result = await AskSheet.showSheet(context);
-                if (!context.mounted || result == null) return;
-                AppMessaging.showSuccess(
-                  context,
-                  'Query submitted for ${result.radiusMeters}m nearby people.',
-                );
-              },
-              onBroadcastPressed: () async {
-                final result = await BroadcastSheet.showSheet(context);
-                if (!context.mounted || result == null) return;
-                AppMessaging.showSuccess(
-                  context,
-                  '${result.category} broadcast shared in ${result.radiusMeters}m radius.',
-                );
-              },
+              onAskPressed: () => controller.onAskPressed(context),
+              onBroadcastPressed: () => controller.onBroadcastPressed(context),
             )
           : null,
       bottomNavigationBar: CustomBottomNavigationBar(

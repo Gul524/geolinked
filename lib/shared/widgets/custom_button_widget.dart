@@ -6,7 +6,7 @@ class CustomButtonWidget extends StatelessWidget {
     required this.onPressed,
     this.isPrimary = true,
     this.height = 50,
-    this.borderRadius = 14,
+    this.borderRadius = 18,
     super.key,
   });
 

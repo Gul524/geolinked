@@ -35,12 +35,20 @@ class CustomChipWidget extends StatelessWidget {
         children: <Widget>[
           Icon(iconData, size: 14, color: foreground),
           const SizedBox(width: 6),
-          Text(
-            text,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: foreground,
-              fontWeight: FontWeight.w700,
-            ),
+          Column(
+            children: [
+              Wrap(
+                children: [
+                  Text(
+                    text,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: foreground,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),

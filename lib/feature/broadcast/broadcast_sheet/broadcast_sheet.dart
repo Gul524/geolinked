@@ -4,16 +4,19 @@ import 'package:geolinked/feature/broadcast/broadcast_sheet/broadcast_sheet_cont
 class BroadcastSheet extends ConsumerStatefulWidget {
   const BroadcastSheet({
     this.initialTargetLocation,
+    this.initialTargetLocationName,
     this.onSelectTargetLocation,
     super.key,
   });
 
   final BroadcastSheetGeoPoint? initialTargetLocation;
+  final String? initialTargetLocationName;
   final Future<BroadcastSheetGeoPoint?> Function()? onSelectTargetLocation;
 
   static Future<BroadcastSheetResult?> showSheet(
     BuildContext context, {
     BroadcastSheetGeoPoint? targetLocation,
+    String? targetLocationName,
     Future<BroadcastSheetGeoPoint?> Function()? onSelectTargetLocation,
   }) {
     return showModalBottomSheet<BroadcastSheetResult>(
@@ -23,6 +26,7 @@ class BroadcastSheet extends ConsumerStatefulWidget {
       backgroundColor: Colors.transparent,
       builder: (_) => BroadcastSheet(
         initialTargetLocation: targetLocation,
+        initialTargetLocationName: targetLocationName,
         onSelectTargetLocation: onSelectTargetLocation,
       ),
     );
@@ -39,20 +43,11 @@ class _BroadcastSheetState extends ConsumerState<BroadcastSheet> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
           .read(broadcastSheetControllerProvider.notifier)
-          .initialize(initialTargetLocation: widget.initialTargetLocation);
+          .initialize(
+            initialTargetLocation: widget.initialTargetLocation,
+            initialLocationName: widget.initialTargetLocationName,
+          );
     });
-  }
-
-  Future<void> _onSelectTargetLocation() async {
-    final BroadcastSheetController controller = ref.read(
-      broadcastSheetControllerProvider.notifier,
-    );
-
-    final BroadcastSheetGeoPoint selected =
-        await widget.onSelectTargetLocation?.call() ??
-        const BroadcastSheetGeoPoint(latitude: 24.8607, longitude: 67.0011);
-
-    controller.setTargetLocation(selected);
   }
 
   @override
@@ -122,23 +117,22 @@ class _BroadcastSheetState extends ConsumerState<BroadcastSheet> {
                     spacing: 8,
                     runSpacing: 8,
                     children: <Widget>[
-                      CustomChipWidget(
-                        text: '${state.radiusMeters}m radius',
-                        iconData: Icons.radar_rounded,
-                        type: CustomChipType.info,
-                      ),
-                      CustomChipWidget(
-                        text: 'Select target location',
-                        iconData: Icons.place_rounded,
-                        type: CustomChipType.alert,
-                        onTap: _onSelectTargetLocation,
-                      ),
                       if (state.targetLocation != null)
                         CustomChipWidget(
                           text: state.targetLocation!.compactLabel,
                           iconData: Icons.my_location_rounded,
                           type: CustomChipType.success,
                           onTap: controller.clearTargetLocation,
+                        ),
+                      if (state.locationName != null)
+                        SizedBox(
+                          width: 200,
+                          child: CustomChipWidget(
+                            text: state.locationName!,
+                            iconData: Icons.location_on_rounded,
+                            type: CustomChipType.success,
+                            onTap: controller.clearTargetLocation,
+                          ),
                         ),
                     ],
                   ),

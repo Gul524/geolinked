@@ -4,16 +4,19 @@ import 'package:geolinked/feature/ask/ask_sheet/ask_sheet_controller.dart';
 class AskSheet extends ConsumerStatefulWidget {
   const AskSheet({
     this.initialTargetLocation,
+    this.initialTargetLocationName,
     this.onSelectTargetLocation,
     super.key,
   });
 
   final AskSheetGeoPoint? initialTargetLocation;
+  final String? initialTargetLocationName;
   final Future<AskSheetGeoPoint?> Function()? onSelectTargetLocation;
 
   static Future<AskSheetResult?> showSheet(
     BuildContext context, {
     AskSheetGeoPoint? targetLocation,
+    String? targetLocationName,
     Future<AskSheetGeoPoint?> Function()? onSelectTargetLocation,
   }) {
     return showModalBottomSheet<AskSheetResult>(
@@ -23,6 +26,7 @@ class AskSheet extends ConsumerStatefulWidget {
       backgroundColor: Colors.transparent,
       builder: (_) => AskSheet(
         initialTargetLocation: targetLocation,
+        initialTargetLocationName: targetLocationName,
         onSelectTargetLocation: onSelectTargetLocation,
       ),
     );
@@ -39,20 +43,11 @@ class _AskSheetState extends ConsumerState<AskSheet> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
           .read(askSheetControllerProvider.notifier)
-          .initialize(initialTargetLocation: widget.initialTargetLocation);
+          .initialize(
+            initialTargetLocation: widget.initialTargetLocation,
+            initialLocationName: widget.initialTargetLocationName,
+          );
     });
-  }
-
-  Future<void> _onSelectTargetLocation() async {
-    final AskSheetController controller = ref.read(
-      askSheetControllerProvider.notifier,
-    );
-
-    final AskSheetGeoPoint selected =
-        await widget.onSelectTargetLocation?.call() ??
-        const AskSheetGeoPoint(latitude: 24.8607, longitude: 67.0011);
-
-    controller.setTargetLocation(selected);
   }
 
   @override
@@ -125,18 +120,20 @@ class _AskSheetState extends ConsumerState<AskSheet> {
                         iconData: Icons.radar_rounded,
                         type: CustomChipType.info,
                       ),
-                      CustomChipWidget(
-                        text: 'Select target location',
-                        iconData: Icons.place_rounded,
-                        type: CustomChipType.alert,
-                        onTap: _onSelectTargetLocation,
-                      ),
                       if (state.targetLocation != null)
                         CustomChipWidget(
                           text: state.targetLocation!.compactLabel,
                           iconData: Icons.my_location_rounded,
                           type: CustomChipType.success,
-                          onTap: controller.clearTargetLocation,
+                        ),
+                      if (state.locationName != null)
+                        SizedBox(
+                          width: 200,
+                          child: CustomChipWidget(
+                            text: state.locationName!,
+                            iconData: Icons.location_on_rounded,
+                            type: CustomChipType.success,
+                          ),
                         ),
                     ],
                   ),

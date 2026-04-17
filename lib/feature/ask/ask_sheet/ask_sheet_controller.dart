@@ -25,21 +25,31 @@ class AskSheetResult {
 }
 
 class AskSheetState {
-  const AskSheetState({required this.radiusMeters, this.targetLocation});
+  const AskSheetState({
+    required this.radiusMeters,
+    this.targetLocation,
+    this.locationName,
+  });
 
   final int radiusMeters;
   final AskSheetGeoPoint? targetLocation;
+  final String? locationName;
 
   AskSheetState copyWith({
     int? radiusMeters,
     AskSheetGeoPoint? targetLocation,
     bool clearTargetLocation = false,
+    String? locationName,
+    bool clearLocationName = false,
   }) {
     return AskSheetState(
       radiusMeters: radiusMeters ?? this.radiusMeters,
       targetLocation: clearTargetLocation
           ? null
           : (targetLocation ?? this.targetLocation),
+      locationName: clearLocationName
+          ? null
+          : (locationName ?? this.locationName),
     );
   }
 }
@@ -63,13 +73,17 @@ class AskSheetController extends Notifier<AskSheetState> {
     return const AskSheetState(radiusMeters: defaultRadiusMeters);
   }
 
-  void initialize({AskSheetGeoPoint? initialTargetLocation}) {
+  void initialize({
+    AskSheetGeoPoint? initialTargetLocation,
+    String? initialLocationName,
+  }) {
     subjectController.clear();
     questionController.clear();
 
     state = AskSheetState(
       radiusMeters: defaultRadiusMeters,
       targetLocation: initialTargetLocation,
+      locationName: initialLocationName,
     );
   }
 
@@ -79,14 +93,6 @@ class AskSheetController extends Notifier<AskSheetState> {
       maxRadiusMeters,
     );
     state = state.copyWith(radiusMeters: normalized);
-  }
-
-  void setTargetLocation(AskSheetGeoPoint targetLocation) {
-    state = state.copyWith(targetLocation: targetLocation);
-  }
-
-  void clearTargetLocation() {
-    state = state.copyWith(clearTargetLocation: true);
   }
 
   String? validateSubject(String? value) {

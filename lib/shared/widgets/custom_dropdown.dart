@@ -54,6 +54,9 @@ class CustomDropdown<T> extends StatelessWidget {
           onChanged: isEditable ? onChange : null,
           decoration: InputDecoration(
             hintText: hintText,
+            hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: onSurface.withValues(alpha: 0.5),
+            ),
             filled: true,
             fillColor: Theme.of(
               context,

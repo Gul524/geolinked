@@ -33,12 +33,14 @@ class BroadcastSheetState {
     required this.categories,
     this.selectedCategory,
     this.targetLocation,
+    this.locationName,
   });
 
   final int radiusMeters;
   final List<String> categories;
   final String? selectedCategory;
   final BroadcastSheetGeoPoint? targetLocation;
+  final String? locationName;
 
   BroadcastSheetState copyWith({
     int? radiusMeters,
@@ -47,6 +49,8 @@ class BroadcastSheetState {
     bool clearSelectedCategory = false,
     BroadcastSheetGeoPoint? targetLocation,
     bool clearTargetLocation = false,
+    String? locationName,
+    bool clearLocationName = false,
   }) {
     return BroadcastSheetState(
       radiusMeters: radiusMeters ?? this.radiusMeters,
@@ -57,6 +61,9 @@ class BroadcastSheetState {
       targetLocation: clearTargetLocation
           ? null
           : (targetLocation ?? this.targetLocation),
+      locationName: clearLocationName
+          ? null
+          : (locationName ?? this.locationName),
     );
   }
 }
@@ -86,12 +93,16 @@ class BroadcastSheetController extends Notifier<BroadcastSheetState> {
     );
   }
 
-  void initialize({BroadcastSheetGeoPoint? initialTargetLocation}) {
+  void initialize({
+    BroadcastSheetGeoPoint? initialTargetLocation,
+    String? initialLocationName,
+  }) {
     questionController.clear();
     state = state.copyWith(
       radiusMeters: defaultRadiusMeters,
       clearSelectedCategory: true,
       targetLocation: initialTargetLocation,
+      locationName: initialLocationName,
     );
   }
 
@@ -108,11 +119,14 @@ class BroadcastSheetController extends Notifier<BroadcastSheetState> {
   }
 
   void setTargetLocation(BroadcastSheetGeoPoint targetLocation) {
-    state = state.copyWith(targetLocation: targetLocation);
+    state = state.copyWith(
+      targetLocation: targetLocation,
+      clearLocationName: true,
+    );
   }
 
   void clearTargetLocation() {
-    state = state.copyWith(clearTargetLocation: true);
+    state = state.copyWith(clearTargetLocation: true, clearLocationName: true);
   }
 
   String? validateCategory(String? value) {
