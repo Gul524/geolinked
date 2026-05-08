@@ -5,11 +5,24 @@ import 'package:geolinked/feature/profile/widgets/profile_header_widget.dart';
 import 'package:geolinked/feature/profile/widgets/profile_section_card_widget.dart';
 import 'package:geolinked/feature/profile/widgets/profile_setting_rows_widget.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(profileControllerProvider.notifier).initialize(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final ProfileState state = ref.watch(profileControllerProvider);
     final ProfileController controller = ref.read(
       profileControllerProvider.notifier,

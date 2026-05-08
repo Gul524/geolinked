@@ -3,6 +3,7 @@ export 'package:flutter/material.dart';
 export 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // configs
+export '../configs/constants.dart';
 export '../configs/providers/theme_provider.dart';
 export '../configs/theme/app_theme.dart';
 
@@ -11,6 +12,7 @@ export 'routes.dart';
 
 // services
 export '../services/api_service.dart';
+export '../services/data_flow_service.dart';
 export '../services/geo_service.dart';
 export '../services/local_storage_service.dart';
 export '../services/notification_service.dart';

@@ -3,6 +3,10 @@ import 'package:geolinked/utils/app_exports.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await LocalStorageService.instance.init();
+  ApiService.instance.setBaseUrl(AppConstants.apiBaseUrl);
+  ApiService.instance.setAuthToken(
+    LocalStorageService.instance.get<String>(AppConstants.authTokenKey),
+  );
   // await NotificationService.instance.initialize();
 
   runApp(const ProviderScope(child: MainApp()));

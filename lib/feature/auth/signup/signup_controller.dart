@@ -1,10 +1,18 @@
 import 'package:geolinked/utils/app_exports.dart';
 
 class SignupState {
-  const SignupState();
+  const SignupState({required this.isSubmitting});
+
+  final bool isSubmitting;
+
+  SignupState copyWith({bool? isSubmitting}) {
+    return SignupState(isSubmitting: isSubmitting ?? this.isSubmitting);
+  }
 }
 
 class SignupController extends Notifier<SignupState> {
+  static const String _apiPath = '/auth/signup';
+
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
@@ -21,18 +29,49 @@ class SignupController extends Notifier<SignupState> {
       confirmPasswordController.dispose();
     });
 
-    return const SignupState();
+    return const SignupState(isSubmitting: false);
   }
 
   Future<void> onSignupPressed(BuildContext context) async {
+    if (state.isSubmitting) {
+      return;
+    }
+
     if (!formKey.currentState!.validate()) {
       AppMessaging.showWarning(context, 'Please complete all required fields.');
       return;
     }
 
-    Navigator.of(
-      context,
-    ).pushNamed(AppRoutes.otp, arguments: emailController.text.trim());
+    state = state.copyWith(isSubmitting: true);
+
+    try {
+      final ApiResult<dynamic> result = await ApiService.instance.post(
+        _apiPath,
+        data: <String, dynamic>{
+          'name': nameController.text.trim(),
+          'email': emailController.text.trim(),
+          'password': passwordController.text.trim(),
+        },
+      );
+
+      if (!result.success) {
+        AppMessaging.showError(
+          context,
+          result.errorMessage ?? 'Signup failed. Please try again.',
+        );
+        return;
+      }
+
+      AppMessaging.showSuccess(
+        context,
+        'Signup details sent for verification.',
+      );
+      Navigator.of(
+        context,
+      ).pushNamed(AppRoutes.otp, arguments: emailController.text.trim());
+    } finally {
+      state = state.copyWith(isSubmitting: false);
+    }
   }
 
   String? validateName(String? value) {

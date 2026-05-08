@@ -4,11 +4,24 @@ import 'package:geolinked/feature/ask/ask_sheet/ask_sheet.dart';
 import 'package:geolinked/feature/ask/widgets/ask_history_header_widget.dart';
 import 'package:geolinked/feature/ask/widgets/ask_history_item_widget.dart';
 
-class AskScreen extends ConsumerWidget {
+class AskScreen extends ConsumerStatefulWidget {
   const AskScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AskScreen> createState() => _AskScreenState();
+}
+
+class _AskScreenState extends ConsumerState<AskScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(askControllerProvider.notifier).initialize(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final AskState state = ref.watch(askControllerProvider);
     final AskController controller = ref.read(askControllerProvider.notifier);
 
@@ -51,6 +64,7 @@ class AskScreen extends ConsumerWidget {
                       );
                     },
                   );
+                  
                 },
               ),
             ),

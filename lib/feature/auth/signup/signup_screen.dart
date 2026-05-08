@@ -9,6 +9,7 @@ class SignupScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final SignupState state = ref.watch(signupControllerProvider);
     final SignupController controller = ref.read(
       signupControllerProvider.notifier,
     );
@@ -30,7 +31,7 @@ class SignupScreen extends ConsumerWidget {
             children: <Widget>[
               AppTextField(
                 label: 'Name',
-                hintText: 'Johan arindo',
+                hintText: 'Ali Khan',
                 controller: controller.nameController,
                 textInputAction: TextInputAction.next,
                 validator: controller.validateName,
@@ -38,7 +39,7 @@ class SignupScreen extends ConsumerWidget {
               const SizedBox(height: 14),
               AppTextField(
                 label: 'Email',
-                hintText: 'johndoe@gmail.com',
+                hintText: 'ali123@gmail.com',
                 controller: controller.emailController,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
@@ -52,6 +53,14 @@ class SignupScreen extends ConsumerWidget {
                 isPasswordField: true,
                 textInputAction: TextInputAction.done,
                 validator: controller.validatePassword,
+              ),
+              AppTextField(
+                label: 'Confirm Password',
+                hintText: '********',
+                controller: controller.confirmPasswordController,
+                isPasswordField: true,
+                textInputAction: TextInputAction.done,
+                validator: controller.validateConfirmPassword,
               ),
               const SizedBox(height: 10),
               Row(
@@ -96,8 +105,12 @@ class SignupScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               CustomButtonWidget(
-                label: 'Create account',
-                onPressed: () => controller.onSignupPressed(context),
+                label: state.isSubmitting
+                    ? 'Creating account...'
+                    : 'Create account',
+                onPressed: state.isSubmitting
+                    ? null
+                    : () => controller.onSignupPressed(context),
               ),
             ],
           ),

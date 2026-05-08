@@ -3,7 +3,7 @@ import 'package:geolinked/utils/app_exports.dart';
 class AppTextField extends StatefulWidget {
   const AppTextField({
     required this.label,
-    required this.hintText,
+    this.hintText = "",
     required this.controller,
     this.isPasswordField = false,
     this.showHideToggle = true,

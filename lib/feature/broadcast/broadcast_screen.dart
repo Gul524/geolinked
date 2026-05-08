@@ -4,11 +4,24 @@ import 'package:geolinked/feature/broadcast/broadcast_sheet/broadcast_sheet.dart
 import 'package:geolinked/feature/broadcast/widgets/broadcast_header_widget.dart';
 import 'package:geolinked/feature/broadcast/widgets/broadcast_list_item_widget.dart';
 
-class BroadcastScreen extends ConsumerWidget {
+class BroadcastScreen extends ConsumerStatefulWidget {
   const BroadcastScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BroadcastScreen> createState() => _BroadcastScreenState();
+}
+
+class _BroadcastScreenState extends ConsumerState<BroadcastScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(broadcastControllerProvider.notifier).initialize(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final BroadcastState state = ref.watch(broadcastControllerProvider);
     final BroadcastController controller = ref.read(
       broadcastControllerProvider.notifier,

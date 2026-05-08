@@ -17,6 +17,28 @@ class BroadcastDiscussionMessage {
   final String distanceText;
   final String timeAgo;
   final bool isCurrentUser;
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'id': id,
+      'author': author,
+      'text': text,
+      'distanceText': distanceText,
+      'timeAgo': timeAgo,
+      'isCurrentUser': isCurrentUser,
+    };
+  }
+
+  factory BroadcastDiscussionMessage.fromJson(Map<String, dynamic> json) {
+    return BroadcastDiscussionMessage(
+      id: (json['id'] as String? ?? '').trim(),
+      author: (json['author'] as String? ?? '').trim(),
+      text: (json['text'] as String? ?? '').trim(),
+      distanceText: (json['distanceText'] as String? ?? '').trim(),
+      timeAgo: (json['timeAgo'] as String? ?? '').trim(),
+      isCurrentUser: (json['isCurrentUser'] as bool?) ?? false,
+    );
+  }
 }
 
 class BroadcastDiscussionState {
@@ -37,6 +59,10 @@ class BroadcastDiscussionState {
 }
 
 class BroadcastDiscussionController extends Notifier<BroadcastDiscussionState> {
+  static const String _localPrefix = 'broadcast_discussion_';
+  static const String _messagesPath = '/broadcasts';
+  static const String _repliesPath = '/replies';
+
   final TextEditingController replyController = TextEditingController();
 
   @override
@@ -78,12 +104,10 @@ class BroadcastDiscussionController extends Notifier<BroadcastDiscussionState> {
     );
   }
 
-  void initialize(BroadcastItem item) {
-    if (state.item.id == item.id) {
-      return;
-    }
-
+  Future<void> initialize(BuildContext context, BroadcastItem item) async {
     state = state.copyWith(item: item);
+    await _loadLocal(context);
+    await _loadApi(context);
   }
 
   String get locationTitle => 'Nearby Discussion';
@@ -112,6 +136,113 @@ class BroadcastDiscussionController extends Notifier<BroadcastDiscussionState> {
 
     replyController.clear();
     state = state.copyWith(messages: updatedMessages);
+    _saveLocal();
+    _sendReplyToApi(text);
+  }
+
+  String get _localKey => '$_localPrefix${state.item.id}';
+
+  Future<void> _loadLocal(BuildContext context) async {
+    final ApiResult<Map<String, dynamic>> localResult =
+        DataFlowService.loadLocal<Map<String, dynamic>>(
+          reader: _readLocalThread,
+          emptyMessage: 'No local broadcast thread cache found.',
+        );
+
+    if (!localResult.success || localResult.data == null) {
+      return;
+    }
+
+    final Map<String, dynamic> data = localResult.data!;
+    final List<BroadcastDiscussionMessage> messages = _parseMessages(
+      data['messages'],
+    );
+
+    state = state.copyWith(
+      messages: messages.isNotEmpty ? messages : state.messages,
+    );
+    AppMessaging.showInfo(
+      context,
+      'Loaded broadcast thread from local storage.',
+    );
+  }
+
+  Future<void> _loadApi(BuildContext context) async {
+    final ApiResult<Map<String, dynamic>> apiResult =
+        await DataFlowService.loadApi<Map<String, dynamic>>(
+          request: () => ApiService.instance.get(
+            '$_messagesPath/${state.item.id}/messages',
+          ),
+          parser: _parseThreadPayload,
+        );
+
+    if (!apiResult.success || apiResult.data == null) {
+      AppMessaging.showWarning(
+        context,
+        apiResult.errorMessage ?? 'Could not sync broadcast thread.',
+      );
+      return;
+    }
+
+    final Map<String, dynamic> data = apiResult.data!;
+    state = state.copyWith(messages: _parseMessages(data['messages']));
+    _saveLocal();
+    AppMessaging.showSuccess(context, 'Broadcast thread synced from server.');
+  }
+
+  Future<void> _sendReplyToApi(String text) async {
+    await ApiService.instance.post(
+      '$_messagesPath/${state.item.id}$_repliesPath',
+      data: <String, dynamic>{'text': text},
+    );
+  }
+
+  Map<String, dynamic>? _readLocalThread() {
+    final Map<dynamic, dynamic>? raw = LocalStorageService.instance
+        .get<Map<dynamic, dynamic>>(_localKey);
+    if (raw == null) {
+      return null;
+    }
+
+    return Map<String, dynamic>.from(raw);
+  }
+
+  Future<void> _saveLocal() async {
+    await DataFlowService.saveLocal(
+      writer: () =>
+          LocalStorageService.instance.put(_localKey, <String, dynamic>{
+            'messages': state.messages
+                .map((BroadcastDiscussionMessage message) => message.toJson())
+                .toList(),
+          }),
+    );
+  }
+
+  Map<String, dynamic> _parseThreadPayload(dynamic payload) {
+    if (payload is Map<String, dynamic>) {
+      final dynamic data = payload['data'];
+      if (data is Map<String, dynamic>) {
+        return data;
+      }
+      return payload;
+    }
+
+    return <String, dynamic>{'messages': payload};
+  }
+
+  List<BroadcastDiscussionMessage> _parseMessages(dynamic payload) {
+    if (payload is! List) {
+      return const <BroadcastDiscussionMessage>[];
+    }
+
+    return payload
+        .whereType<Map>()
+        .map(
+          (Map item) => BroadcastDiscussionMessage.fromJson(
+            Map<String, dynamic>.from(item),
+          ),
+        )
+        .toList(growable: false);
   }
 }
 

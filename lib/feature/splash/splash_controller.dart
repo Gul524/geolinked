@@ -25,13 +25,19 @@ class SplashController extends Notifier<SplashState> {
           OnboardingController.onboardingCompletedKey,
         ) ??
         false;
+    final String authToken =
+        LocalStorageService.instance.get<String>(AppConstants.authTokenKey) ??
+        '';
+    final bool isAuthenticated = authToken.trim().isNotEmpty;
 
     if (!context.mounted) {
       return;
     }
 
     Navigator.of(context).pushReplacementNamed(
-      hasCompletedOnboarding ? AppRoutes.login : AppRoutes.onboarding,
+      hasCompletedOnboarding
+          ? (isAuthenticated ? AppRoutes.home : AppRoutes.login)
+          : AppRoutes.onboarding,
     );
 
     state = state.copyWith(initialized: true);

@@ -9,6 +9,9 @@ class OtpVerificationScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final OtpVerificationState state = ref.watch(
+      otpVerificationControllerProvider,
+    );
     final OtpVerificationController controller = ref.read(
       otpVerificationControllerProvider.notifier,
     );
@@ -45,9 +48,15 @@ class OtpVerificationScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 20),
                     CustomButtonWidget(
-                      label: 'Verify & Create Account',
-                      onPressed: () =>
-                          controller.onVerifyPressed(context, email: email),
+                      label: state.isSubmitting
+                          ? 'Verifying...'
+                          : 'Verify & Create Account',
+                      onPressed: state.isSubmitting
+                          ? null
+                          : () => controller.onVerifyPressed(
+                              context,
+                              email: email,
+                            ),
                     ),
                   ],
                 ),

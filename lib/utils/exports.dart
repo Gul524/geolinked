@@ -11,6 +11,7 @@ export 'routes.dart';
 
 // services
 export '../services/api_service.dart';
+export '../services/data_flow_service.dart';
 export '../services/geo_service.dart';
 export '../services/local_storage_service.dart';
 export '../services/notification_service.dart';

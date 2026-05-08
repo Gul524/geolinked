@@ -5,20 +5,36 @@ import 'package:geolinked/feature/broadcast/broadcast_controller.dart';
 import 'package:geolinked/feature/broadcast/broadcast_discussion_controller.dart';
 import 'package:geolinked/feature/broadcast/widgets/broadcast_discussion_message_bubble_widget.dart';
 
-class BroadcastDiscussionScreen extends ConsumerWidget {
+class BroadcastDiscussionScreen extends ConsumerStatefulWidget {
   const BroadcastDiscussionScreen({required this.item, super.key});
 
   final BroadcastItem item;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BroadcastDiscussionScreen> createState() =>
+      _BroadcastDiscussionScreenState();
+}
+
+class _BroadcastDiscussionScreenState
+    extends ConsumerState<BroadcastDiscussionScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref
+          .read(broadcastDiscussionControllerProvider.notifier)
+          .initialize(context, widget.item);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final BroadcastDiscussionState state = ref.watch(
       broadcastDiscussionControllerProvider,
     );
     final BroadcastDiscussionController controller = ref.read(
       broadcastDiscussionControllerProvider.notifier,
     );
-    controller.initialize(item);
 
     final Color primary = Theme.of(context).colorScheme.primary;
 
@@ -44,7 +60,7 @@ class BroadcastDiscussionScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    item.title,
+                    state.item.title,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -52,7 +68,7 @@ class BroadcastDiscussionScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    item.message,
+                    state.item.message,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Colors.white,
                       height: 1.35,

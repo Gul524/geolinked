@@ -9,6 +9,7 @@ class LoginScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final LoginState state = ref.watch(loginControllerProvider);
     final LoginController controller = ref.read(
       loginControllerProvider.notifier,
     );
@@ -30,7 +31,7 @@ class LoginScreen extends ConsumerWidget {
             children: <Widget>[
               AppTextField(
                 label: 'Email',
-                hintText: 'johndoe@gmail.com',
+                hintText: 'ali123@gmail.com',
                 controller: controller.emailController,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
@@ -86,8 +87,10 @@ class LoginScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               CustomButtonWidget(
-                label: 'Login',
-                onPressed: () => controller.onLoginPressed(context),
+                label: state.isSubmitting ? 'Logging in...' : 'Login',
+                onPressed: state.isSubmitting
+                    ? null
+                    : () => controller.onLoginPressed(context),
               ),
             ],
           ),
