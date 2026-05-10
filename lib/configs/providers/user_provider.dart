@@ -82,6 +82,30 @@ class UserNotifier extends Notifier<UserModel?> {
     state = null;
   }
 
+  /// Permanent Account Deletion: Removes all user data and Auth account.
+  Future<void> deleteAccount() async {
+    final String? userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    try {
+      // 1. Stop background sync
+      await BackgroundService.stopLocationSync();
+
+      // 2. Delete user document from Firestore
+      await FirebaseFirestore.instance.collection('users').doc(userId).delete();
+      
+      // 3. Delete Auth account
+      await FirebaseAuth.instance.currentUser?.delete();
+      
+      // 4. Clear local cache
+      await LocalStorageService.instance.delete(_userCacheKey);
+      state = null;
+    } catch (e) {
+      debugPrint('Error deleting account: $e');
+      rethrow;
+    }
+  }
+
   Future<bool> updateLocation(double latitude, double longitude) async {
     final String? userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return false;

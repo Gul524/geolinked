@@ -14,6 +14,7 @@ class AppRoutes {
   static const String otp = OtpVerificationScreen.routeName;
   static const String home = HomeScreen.routeName;
   static const String terms = TermsConditionsScreen.routeName;
+  static const String privacy = '/privacy';
 
   const AppRoutes._();
 }

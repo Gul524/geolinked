@@ -130,6 +130,13 @@ class BroadcastSheetController extends Notifier<BroadcastSheetState> {
     state = state.copyWith(radiusMeters: normalized);
   }
 
+  void clearTargetLocation() {
+    state = state.copyWith(
+      clearTargetLocation: true,
+      clearLocationName: true,
+    );
+  }
+
   void setCategory(String? value) {
     state = state.copyWith(selectedCategory: value);
   }

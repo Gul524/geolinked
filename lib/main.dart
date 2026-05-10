@@ -9,6 +9,7 @@ import 'package:geolinked/feature/auth/signup/otp_verification_screen.dart';
 import 'package:geolinked/feature/auth/signup/terms_conditions_screen.dart';
 import 'package:geolinked/feature/home/home_screen.dart';
 import 'package:geolinked/services/background_service.dart';
+import 'package:geolinked/feature/profile/privacy_policy_screen.dart';
 
 
 Future<void> main() async {
@@ -55,6 +56,7 @@ class MainApp extends ConsumerWidget {
         AppRoutes.otp: (_) => const OtpVerificationScreen(),
         AppRoutes.home: (_) => const HomeScreen(),
         AppRoutes.terms: (_) => const TermsConditionsScreen(),
+        AppRoutes.privacy: (_) => const PrivacyPolicyScreen(),
       },
     );
   }

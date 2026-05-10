@@ -5,42 +5,32 @@ Welcome to GeoLinked! This guide explains how to use the core features of the ap
 ## 1. Getting Started
 - **Account Creation**: Use the Signup screen to create an account with your email and name.
 - **Login**: Your session is managed by Firebase. Once logged in, the app will remember you.
-- **Location Permissions**: For GeoLinked to work, you MUST allow location access. To receive real-time alerts even when the app is closed, select **"Allow all the time"** when prompted. 
-- **Privacy**: Your background location is only used to send you relevant nearby alerts and is never shared with third-party advertisers.
+- **Location Permissions**: For GeoLinked to work, you MUST allow location access. Select **"Allow all the time"** to receive background alerts.
 
-## 2. Using the Community Map
-The Map is your main dashboard.
-- **Current Location**: The blue dot represents you.
-- **Nearby Markers**:
-  - **Green Dots**: "Asks" or questions from people near you.
-  - **Blue Dots**: "Broadcasts" or alerts from people near you.
+## 2. Privacy & Data Control
+Your privacy is our priority.
+- **Privacy Policy**: View our data handling practices anytime via the **Profile > Privacy Policy** screen.
+- **Data Deletion**: If you wish to leave the community, you can permanently delete your account and all associated data via the red link at the bottom of the **Profile** screen.
+- **Security**: All your posts and profile data are protected by industry-standard Firebase Security Rules.
 
-## 3. Asking a Question (Asks)
-1. Tap the **"Ask"** button on the home screen.
-2. Tap on the map to select the **target location** you are asking about (e.g., a specific shop or intersection).
-3. Confirm the location.
-4. Fill in the **Subject** and **Question**.
-5. Set the **Radius** (how far from that point people should be notified).
-6. **Add Image**: Tap the image button to attach a photo (Optional).
-7. Submit! People in that radius will receive a notification and can reply.
+## 3. Using the Community Map
+- **Blue Dot**: Your current location.
+- **Green Markers**: Community questions (Asks).
+- **Blue/Red Markers**: Area updates (Broadcasts).
 
-## 4. Sharing an Update (Broadcasts)
-1. Tap the **"Broadcast"** button.
-2. Select the location on the map.
-3. Select a **Category** (Traffic, Road Block, Utility Issue, etc.).
-4. Write your message.
-5. Select the **Severity** (Info, Warning, Emergency).
-6. Set the **Broadcast Radius** (up to 30km).
-7. **Attach Photo**: Add a photo to provide visual context (Optional).
-8. Submit! This will appear as an alert on maps for everyone in that range.
+## 4. Asking a Question (Asks)
+1. Tap **"Ask"**.
+2. Select the target location on the map.
+3. Fill in the details and optionally **attach a photo**.
+4. Set the notify radius and submit.
 
-## 5. Engaging in Discussions
-- Tap on any marker on the map or an item in the **Asks** or **Broadcasts** lists.
-- You can read the full detail and see what others are saying.
-- Type your comment to help out or get more info.
+## 5. Sharing an Update (Broadcasts)
+1. Tap **"Broadcast"**.
+2. Select a category (Traffic, Utility, etc.) and write your message.
+3. Attach a photo if relevant.
+4. Set the broadcast range (up to 30km) and submit.
 
-## 6. Profile & Settings
-- **Radius Tuning**: Adjust your default search radius in the Profile tab.
-- **Notifications**: Toggle push alerts for nearby activity.
-- **Anonymous Mode**: If enabled, your name will be hidden when you post or comment.
-- **Logout**: Sign out from the Account section in the Profile tab.
+## 6. Community Engagement
+- Tap any marker to join the discussion.
+- Upvote or comment to help your neighbors.
+- Switch between **Map view** and **Feed view** via the bottom navigation bar.

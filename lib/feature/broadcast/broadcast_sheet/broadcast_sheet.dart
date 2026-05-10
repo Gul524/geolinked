@@ -74,7 +74,7 @@ class _BroadcastSheetState extends ConsumerState<BroadcastSheet> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           boxShadow: <BoxShadow>[
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
+              color: Colors.black.withOpacity(0.12),
               blurRadius: 24,
               offset: const Offset(0, -6),
             ),
@@ -94,7 +94,7 @@ class _BroadcastSheetState extends ConsumerState<BroadcastSheet> {
                       width: 42,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: onSurface.withValues(alpha: 0.15),
+                        color: onSurface.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(999),
                       ),
                     ),
@@ -110,7 +110,7 @@ class _BroadcastSheetState extends ConsumerState<BroadcastSheet> {
                   Text(
                     'Notify nearby people with timely local updates.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: onSurface.withValues(alpha: 0.65),
+                          color: onSurface.withOpacity(0.65),
                         ),
                   ),
                   const SizedBox(height: 12),
@@ -268,6 +268,13 @@ class _ImagePickerWidget extends StatelessWidget {
                 image: FileImage(image!),
                 fit: BoxFit.cover,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
           ),
           Positioned(
@@ -299,10 +306,10 @@ class _ImagePickerWidget extends StatelessWidget {
         height: 80,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: surface.withValues(alpha: 0.5),
+          color: surface.withOpacity(0.5),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: primary.withValues(alpha: 0.3),
+            color: primary.withOpacity(0.3),
             width: 1.5,
           ),
         ),

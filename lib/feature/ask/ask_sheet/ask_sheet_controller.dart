@@ -110,6 +110,13 @@ class AskSheetController extends Notifier<AskSheetState> {
     state = state.copyWith(radiusMeters: normalized);
   }
 
+  void clearTargetLocation() {
+    state = state.copyWith(
+      clearTargetLocation: true,
+      clearLocationName: true,
+    );
+  }
+
   Future<void> pickImage(ImageSource source) async {
     try {
       final XFile? pickedFile = await _picker.pickImage(

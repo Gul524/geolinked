@@ -71,7 +71,7 @@ class _AskSheetState extends ConsumerState<AskSheet> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           boxShadow: <BoxShadow>[
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
+              color: Colors.black.withOpacity(0.12),
               blurRadius: 24,
               offset: const Offset(0, -6),
             ),
@@ -91,7 +91,7 @@ class _AskSheetState extends ConsumerState<AskSheet> {
                       width: 42,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: onSurface.withValues(alpha: 0.15),
+                        color: onSurface.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(999),
                       ),
                     ),
@@ -107,7 +107,7 @@ class _AskSheetState extends ConsumerState<AskSheet> {
                   Text(
                     'Notify nearby people within your selected radius.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: onSurface.withValues(alpha: 0.65),
+                          color: onSurface.withOpacity(0.65),
                         ),
                   ),
                   const SizedBox(height: 12),
@@ -125,6 +125,7 @@ class _AskSheetState extends ConsumerState<AskSheet> {
                           text: state.targetLocation!.compactLabel,
                           iconData: Icons.my_location_rounded,
                           type: CustomChipType.success,
+                          onTap: controller.clearTargetLocation,
                         ),
                       if (state.locationName != null)
                         SizedBox(
@@ -133,6 +134,7 @@ class _AskSheetState extends ConsumerState<AskSheet> {
                             text: state.locationName!,
                             iconData: Icons.location_on_rounded,
                             type: CustomChipType.success,
+                            onTap: controller.clearTargetLocation,
                           ),
                         ),
                     ],
@@ -266,6 +268,13 @@ class _ImagePickerWidget extends StatelessWidget {
                 image: FileImage(image!),
                 fit: BoxFit.cover,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
           ),
           Positioned(
@@ -297,11 +306,11 @@ class _ImagePickerWidget extends StatelessWidget {
         height: 80,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: surface.withValues(alpha: 0.5),
+          color: surface.withOpacity(0.5),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: primary.withValues(alpha: 0.3),
-            dashStyle: const DashStyle(array: <double>[4, 4]),
+            color: primary.withOpacity(0.3),
+            width: 1.5,
           ),
         ),
         child: Column(

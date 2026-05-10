@@ -35,11 +35,15 @@ class StorageService {
   }
 
   /// Uploads an image specifically for an Ask or Broadcast.
+  /// Paths are structured as posts/{folder}/{userId}/{fileName} for security.
   Future<String?> uploadPostImage(File file, String folder) async {
+    final String? userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return null;
+
     final String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
     return await uploadFile(
       file: file,
-      path: 'posts/$folder/$fileName',
+      path: 'posts/$folder/$userId/$fileName',
     );
   }
 }
