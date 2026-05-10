@@ -76,7 +76,7 @@ class BroadcastDiscussionController extends Notifier<BroadcastDiscussionState> {
       final currentUserId = FirebaseAuth.instance.currentUser?.uid;
       final List<BroadcastDiscussionMessage> messages = rawComments.map((c) {
         return BroadcastDiscussionMessage(
-          id: '', 
+          id: c['id'] ?? '',
           author: c['authorName'] ?? 'Someone',
           text: c['message'] ?? '',
           distanceText: '',
@@ -114,6 +114,12 @@ class BroadcastDiscussionController extends Notifier<BroadcastDiscussionState> {
       'message': text,
       'authorName': authorName,
     });
+  }
+
+  Future<void> deleteComment(String commentId) async {
+    if (state.item == null) return;
+    await FirestoreService.instance
+        .deleteComment('broadcast', state.item!.id, commentId);
   }
 }
 

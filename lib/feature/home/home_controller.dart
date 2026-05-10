@@ -141,7 +141,7 @@ class HomeController extends Notifier<HomeState> {
     if (context.mounted && broadcastResult != null) {
       // Submit to Firebase
       await ref.read(broadcastControllerProvider.notifier).createBroadcast(
-            title: broadcastResult.category,
+            category: broadcastResult.category,
             message: broadcastResult.question,
             lat: point.latitude,
             lng: point.longitude,

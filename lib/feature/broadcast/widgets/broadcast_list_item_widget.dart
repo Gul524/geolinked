@@ -1,15 +1,18 @@
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/model/models.dart';
+import 'package:geolinked/shared/widgets/full_screen_viewer.dart';
 
 class BroadcastListItemWidget extends StatelessWidget {
   const BroadcastListItemWidget({
     required this.item,
     required this.onTap,
+    this.onDelete,
     super.key,
   });
 
   final BroadcastModel item;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +44,7 @@ class BroadcastListItemWidget extends StatelessWidget {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: severityColor.withValues(alpha: 0.14),
+                color: severityColor.withOpacity(0.14),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
@@ -58,7 +61,7 @@ class BroadcastListItemWidget extends StatelessWidget {
                     children: <Widget>[
                       Expanded(
                         child: Text(
-                          item.title,
+                          item.category,
                           style: Theme.of(context).textTheme.labelLarge
                               ?.copyWith(
                                 color: severityColor,
@@ -71,9 +74,30 @@ class BroadcastListItemWidget extends StatelessWidget {
                         'Just now',
                         style: Theme.of(context).textTheme.labelMedium
                             ?.copyWith(
-                              color: onSurface.withValues(alpha: 0.42),
+                              color: onSurface.withOpacity(0.42),
                             ),
                       ),
+                      if (onDelete != null)
+                        PopupMenuButton<int>(
+                          icon: Icon(
+                            Icons.more_vert_rounded,
+                            size: 18,
+                            color: onSurface.withOpacity(0.4),
+                          ),
+                          padding: EdgeInsets.zero,
+                          onSelected: (val) {
+                            if (val == 0) onDelete!();
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 0,
+                              child: Text(
+                                'Delete',
+                                style: TextStyle(color: Colors.redAccent),
+                              ),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
                   const SizedBox(height: 2),
@@ -99,14 +123,28 @@ class BroadcastListItemWidget extends StatelessWidget {
                         ),
                       ),
                       if (item.imageUrl != null)
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            image: DecorationImage(
-                              image: NetworkImage(item.imageUrl!),
-                              fit: BoxFit.cover,
+                        GestureDetector(
+                          onTap: () => FullScreenImageViewer.show(
+                            context,
+                            item.imageUrl!,
+                            heroTag: 'broadcast_${item.id}',
+                          ),
+                          child: Hero(
+                            tag: 'broadcast_${item.id}',
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: severityColor.withOpacity(0.2),
+                                  width: 1.5,
+                                ),
+                                image: DecorationImage(
+                                  image: NetworkImage(item.imageUrl!),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -132,14 +170,14 @@ class _MetaPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06),
+        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
           fontWeight: FontWeight.w600,
-          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
         ),
       ),
     );

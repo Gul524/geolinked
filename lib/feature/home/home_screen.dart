@@ -1,10 +1,12 @@
+import 'package:geolinked/feature/broadcast/broadcast_screen.dart';
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/feature/home/home_controller.dart';
 import 'package:geolinked/feature/profile/profile_controller.dart';
 import 'package:geolinked/feature/map/map_widget.dart';
 import 'package:geolinked/feature/ask/ask_screen.dart';
-import 'package:geolinked/feature/broadcast/broadcast_screen.dart';
 import 'package:geolinked/feature/profile/profile_screen.dart';
+import 'package:geolinked/feature/notifications/notification_controller.dart';
+import 'package:geolinked/shared/widgets/app_messaging.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -16,6 +18,21 @@ class HomeScreen extends ConsumerWidget {
     final HomeState state = ref.watch(homeControllerProvider);
     final HomeController controller = ref.read(homeControllerProvider.notifier);
     final ProfileState profileState = ref.watch(profileControllerProvider);
+    final NotificationState notificationState = ref.watch(
+      notificationControllerProvider,
+    );
+
+    // Listen to notification events
+    ref.listen(
+      notificationControllerProvider.notifier.select(
+        (c) => c.notificationEvents,
+      ),
+      (prev, next) {
+        next.listen((message) {
+          AppMessaging.showInfo(context, message);
+        });
+      },
+    );
 
     final surface = Theme.of(context).colorScheme.surface;
 
@@ -38,9 +55,23 @@ class HomeScreen extends ConsumerWidget {
             )
           : null,
       bottomNavigationBar: CustomBottomNavigationBar(
-        items: _items,
+        items: [
+          _items[0],
+          _items[1].copyWith(hasBadge: notificationState.hasUnreadAsks),
+          _items[2].copyWith(hasBadge: notificationState.hasUnreadBroadcasts),
+          _items[3],
+        ],
         currentIndex: state.currentIndex,
-        onTap: controller.setCurrentIndex,
+        onTap: (index) {
+          controller.setCurrentIndex(index);
+          if (index == 1) {
+            ref.read(notificationControllerProvider.notifier).markAsksRead();
+          } else if (index == 2) {
+            ref
+                .read(notificationControllerProvider.notifier)
+                .markBroadcastsRead();
+          }
+        },
       ),
     );
   }

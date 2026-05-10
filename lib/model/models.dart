@@ -1,6 +1,14 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 part 'models.g.dart';
+
+DateTime? _parseDateTime(dynamic value) {
+  if (value == null) return null;
+  if (value is Timestamp) return value.toDate();
+  if (value is String) return DateTime.tryParse(value);
+  return null;
+}
 
 @JsonSerializable(explicitToJson: true)
 class UserModel {
@@ -71,6 +79,36 @@ class AskModel {
       _$AskModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$AskModelToJson(this);
+
+  AskModel copyWith({
+    String? id,
+    String? userId,
+    String? title,
+    String? description,
+    AskStatus? status,
+    int? replyCount,
+    int? upvotes,
+    double? latitude,
+    double? longitude,
+    String? imageUrl,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return AskModel(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      status: status ?? this.status,
+      replyCount: replyCount ?? this.replyCount,
+      upvotes: upvotes ?? this.upvotes,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      imageUrl: imageUrl ?? this.imageUrl,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 }
 
 @JsonEnum(alwaysCreate: true)
@@ -81,7 +119,7 @@ class BroadcastModel {
   const BroadcastModel({
     required this.id,
     required this.authorId,
-    required this.title,
+    required this.category,
     required this.message,
     this.severity = BroadcastSeverity.info,
     this.latitude,
@@ -96,7 +134,7 @@ class BroadcastModel {
 
   final String id;
   final String authorId;
-  final String title;
+  final String category;
   final String message;
   final BroadcastSeverity severity;
   final double? latitude;
@@ -112,6 +150,38 @@ class BroadcastModel {
       _$BroadcastModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$BroadcastModelToJson(this);
+
+  BroadcastModel copyWith({
+    String? id,
+    String? authorId,
+    String? category,
+    String? message,
+    BroadcastSeverity? severity,
+    double? latitude,
+    double? longitude,
+    double? radiusKm,
+    int? verifiedCount,
+    int? seenCount,
+    String? imageUrl,
+    DateTime? createdAt,
+    DateTime? expiresAt,
+  }) {
+    return BroadcastModel(
+      id: id ?? this.id,
+      authorId: authorId ?? this.authorId,
+      category: category ?? this.category,
+      message: message ?? this.message,
+      severity: severity ?? this.severity,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      radiusKm: radiusKm ?? this.radiusKm,
+      verifiedCount: verifiedCount ?? this.verifiedCount,
+      seenCount: seenCount ?? this.seenCount,
+      imageUrl: imageUrl ?? this.imageUrl,
+      createdAt: createdAt ?? this.createdAt,
+      expiresAt: expiresAt ?? this.expiresAt,
+    );
+  }
 }
 
 @JsonEnum(alwaysCreate: true)

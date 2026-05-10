@@ -21,16 +21,17 @@ class AskThreadHeaderWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          GestureDetector(
-            onTap: onBackTap,
-            child: Text(
-              '‹ Back to Questions',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: primary,
-                fontWeight: FontWeight.w700,
+          if (onBackTap != null)
+            GestureDetector(
+              onTap: onBackTap,
+              child: Text(
+                '‹ Back to Questions',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: primary,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
-          ),
           const SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,7 +54,7 @@ class AskThreadHeaderWidget extends StatelessWidget {
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(
                           context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.6),
+                        ).colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
                   ],

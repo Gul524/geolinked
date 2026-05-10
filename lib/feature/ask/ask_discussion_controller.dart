@@ -81,7 +81,7 @@ class AskDiscussionController extends Notifier<AskDiscussionState> {
       final currentUserId = FirebaseAuth.instance.currentUser?.uid;
       final List<AskDiscussionMessage> messages = rawComments.map((c) {
         return AskDiscussionMessage(
-          id: '', // Firestore ID if needed
+          id: c['id'] ?? '',
           author: c['authorName'] ?? 'Someone',
           text: c['message'] ?? '',
           distanceText: '', // Could calculate if distance is stored in comment
@@ -121,6 +121,11 @@ class AskDiscussionController extends Notifier<AskDiscussionState> {
       'message': text,
       'authorName': authorName,
     });
+  }
+
+  Future<void> deleteComment(String commentId) async {
+    if (state.item == null) return;
+    await FirestoreService.instance.deleteComment('ask', state.item!.id, commentId);
   }
 
   void markResolved() {

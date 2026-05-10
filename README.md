@@ -7,18 +7,21 @@ GeoLinked is a location-aware community engagement platform. It allows users to 
 - **Background Location Sync**: Stay updated and receive alerts even when the app is closed.
 - **Media Integration**: Attach photos to your posts to provide visual context for community updates.
 - **Privacy & Data Control**: Integrated Privacy Policy and permanent Account Deletion options for user safety.
+- **Rich Map Experience**: Custom markers for different event types (Traffic, Safety, etc.) with marker clustering for performance.
+- **Premium UX**: Professional skeleton loaders (shimmers), engaging empty states, and pinch-to-zoom image viewing.
 
 ## 🛠️ Tech Stack
 - **Frontend**: Flutter (Riverpod State Management)
 - **Background**: Workmanager (Periodic background sync)
 - **Backend**: Firebase (Auth, Firestore, Cloud Messaging, Storage)
-- **Maps**: Google Maps & OpenStreetMap integration.
+- **Maps**: Flutter Map (OpenStreetMap) with Marker Clustering.
 - **Location**: High-precision geolocator with geohash-based radius searching.
 
 ## 📁 Documentation
 - **[Project Details](PROJECT_DETAILS.md)**: Deep dive into architecture and services.
 - **[Production Checklist](PRODUCTION_CHECKLIST.md)**: Roadmap to release.
 - **[User Guide](USER_GUIDE.md)**: Instructions for community members.
+- **[Analysis](ANALYSIS.md)**: Technical analysis and feature logs.
 
 ## 🚦 Getting Started
 1. Clone the repository.

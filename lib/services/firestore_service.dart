@@ -19,11 +19,16 @@ class FirestoreService {
       GeoPoint(ask.latitude ?? 0, ask.longitude ?? 0),
     );
 
-    final Map<String, dynamic> data = ask.toJson();
+    final docRef = asks.doc();
+    final Map<String, dynamic> data = ask.copyWith(id: docRef.id).toJson();
     data['location'] = geoFirePoint.data;
     data['createdAt'] = FieldValue.serverTimestamp();
 
-    await asks.doc(ask.id).set(data);
+    await docRef.set(data);
+  }
+
+  Future<void> deleteAsk(String askId) async {
+    await asks.doc(askId).delete();
   }
 
   Stream<List<AskModel>> getNearbyAsks({
@@ -57,11 +62,17 @@ class FirestoreService {
       GeoPoint(broadcast.latitude ?? 0, broadcast.longitude ?? 0),
     );
 
-    final Map<String, dynamic> data = broadcast.toJson();
+    final docRef = broadcasts.doc();
+    final Map<String, dynamic> data =
+        broadcast.copyWith(id: docRef.id).toJson();
     data['location'] = geoFirePoint.data;
     data['createdAt'] = FieldValue.serverTimestamp();
 
-    await broadcasts.doc(broadcast.id).set(data);
+    await docRef.set(data);
+  }
+
+  Future<void> deleteBroadcast(String broadcastId) async {
+    await broadcasts.doc(broadcastId).delete();
   }
 
   Stream<List<BroadcastModel>> getNearbyBroadcasts({
@@ -103,6 +114,15 @@ final GeoFirePoint center = GeoFirePoint(GeoPoint(latitude, longitude));
     });
   }
 
+  Future<void> deleteComment(
+    String type,
+    String postId,
+    String commentId,
+  ) async {
+    final collection = type == 'ask' ? asks : broadcasts;
+    await collection.doc(postId).collection('comments').doc(commentId).delete();
+  }
+
   Stream<List<Map<String, dynamic>>> getComments(String type, String postId) {
     final collection = type == 'ask' ? asks : broadcasts;
     return collection
@@ -110,6 +130,10 @@ final GeoFirePoint center = GeoFirePoint(GeoPoint(latitude, longitude));
         .collection('comments')
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => <String, dynamic>{...doc.data(), 'id': doc.id})
+              .toList(),
+        );
   }
 }

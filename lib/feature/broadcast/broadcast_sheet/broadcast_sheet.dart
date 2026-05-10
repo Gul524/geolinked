@@ -91,40 +91,52 @@ class _BroadcastSheetState extends ConsumerState<BroadcastSheet> {
                 children: <Widget>[
                   Center(
                     child: Container(
-                      width: 42,
-                      height: 4,
+                      width: 50,
+                      height: 5,
                       decoration: BoxDecoration(
-                        color: onSurface.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(999),
+                        color: onSurface.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(10),
+                        gradient: LinearGradient(
+                          colors: [
+                            onSurface.withOpacity(0.08),
+                            onSurface.withOpacity(0.15),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text(
-                    'Create Broadcast',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Create Broadcast',
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.5,
+                                  ),
                         ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Notify nearby people with timely local updates.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: onSurface.withOpacity(0.65),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Notify nearby people with timely local updates.',
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: onSurface.withOpacity(0.55),
+                                    fontWeight: FontWeight.w500,
+                                  ),
                         ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: <Widget>[
-                      if (state.targetLocation != null)
-                        CustomChipWidget(
-                          text: state.targetLocation!.compactLabel,
-                          iconData: Icons.my_location_rounded,
-                          type: CustomChipType.success,
-                          onTap: controller.clearTargetLocation,
-                        ),
                       if (state.locationName != null)
                         SizedBox(
                           width: 200,

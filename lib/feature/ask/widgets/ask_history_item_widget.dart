@@ -5,11 +5,13 @@ class AskHistoryItemWidget extends StatelessWidget {
   const AskHistoryItemWidget({
     required this.item,
     required this.onTap,
+    this.onDelete,
     super.key,
   });
 
   final AskModel item;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +58,27 @@ class AskHistoryItemWidget extends StatelessWidget {
                               color: onSurface.withValues(alpha: 0.45),
                             ),
                       ),
+                      if (onDelete != null)
+                        PopupMenuButton<int>(
+                          icon: Icon(
+                            Icons.more_vert_rounded,
+                            size: 18,
+                            color: onSurface.withValues(alpha: 0.4),
+                          ),
+                          padding: EdgeInsets.zero,
+                          onSelected: (val) {
+                            if (val == 0) onDelete!();
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 0,
+                              child: Text(
+                                'Delete',
+                                style: TextStyle(color: Colors.redAccent),
+                              ),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
                   const SizedBox(height: 2),

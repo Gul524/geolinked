@@ -1,26 +1,31 @@
-import 'dart:async';
-import 'package:geolinked/services/firestore_service.dart';
+import 'package:geolinked/services/geo_service.dart';
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/model/models.dart';
+import 'package:geolinked/services/firestore_service.dart';
+import 'dart:async';
 
 class BroadcastState {
   const BroadcastState({
-    required this.nearbyBroadcasts,
-    required this.myBroadcasts,
+    this.nearbyBroadcasts = const [],
+    this.myBroadcasts = const [],
+    this.isLoading = true,
   });
 
   final List<BroadcastModel> nearbyBroadcasts;
   final List<BroadcastModel> myBroadcasts;
+  final bool isLoading;
 
   List<BroadcastModel> get allBroadcasts => [...myBroadcasts, ...nearbyBroadcasts];
 
   BroadcastState copyWith({
     List<BroadcastModel>? nearbyBroadcasts,
     List<BroadcastModel>? myBroadcasts,
+    bool? isLoading,
   }) {
     return BroadcastState(
       nearbyBroadcasts: nearbyBroadcasts ?? this.nearbyBroadcasts,
       myBroadcasts: myBroadcasts ?? this.myBroadcasts,
+      isLoading: isLoading ?? this.isLoading,
     );
   }
 }
@@ -28,17 +33,19 @@ class BroadcastState {
 class BroadcastController extends Notifier<BroadcastState> {
   StreamSubscription? _nearbySubscription;
   StreamSubscription? _myBroadcastsSubscription;
+  Timer? _loadingTimeout;
 
   @override
   BroadcastState build() {
     ref.onDispose(() {
       _nearbySubscription?.cancel();
       _myBroadcastsSubscription?.cancel();
+      _loadingTimeout?.cancel();
     });
 
     _initListeners();
 
-    return const BroadcastState(nearbyBroadcasts: [], myBroadcasts: []);
+    return const BroadcastState();
   }
 
   void initialize(BuildContext context) {
@@ -47,32 +54,70 @@ class BroadcastController extends Notifier<BroadcastState> {
 
   String get subtitle => '${state.allBroadcasts.length} alerts active in your area';
 
-  void _initListeners() {
+  Future<void> _initListeners() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
+
+    // Get real location for nearby queries
+    final position = await GeoService().getCurrentLocation();
+    final double lat = position?.latitude ?? 24.8607;
+    final double lng = position?.longitude ?? 67.0011;
+
+    // My Broadcasts listener
     if (userId != null) {
       _myBroadcastsSubscription = FirestoreService.instance.broadcasts
           .where('authorId', isEqualTo: userId)
           .orderBy('createdAt', descending: true)
           .snapshots()
-          .map((snap) => snap.docs
-              .map((doc) => BroadcastModel.fromJson(doc.data() as Map<String, dynamic>))
-              .toList())
-          .listen((items) {
-        state = state.copyWith(myBroadcasts: items);
-      });
+          .listen(
+        (snap) {
+          try {
+            final items = snap.docs
+                .map((doc) => BroadcastModel.fromJson(
+                    doc.data() as Map<String, dynamic>))
+                .toList();
+            state = state.copyWith(myBroadcasts: items, isLoading: false);
+          } catch (e) {
+            debugPrint('Error parsing my broadcasts: $e');
+            state = state.copyWith(isLoading: false);
+          }
+        },
+        onError: (error) {
+          debugPrint('My broadcasts stream error: $error');
+          state = state.copyWith(isLoading: false);
+        },
+      );
     }
 
-    _nearbySubscription = FirestoreService.instance.getNearbyBroadcasts(
-      latitude: 24.8607,
-      longitude: 67.0011,
+    // Nearby Broadcasts listener
+    _nearbySubscription = FirestoreService.instance
+        .getNearbyBroadcasts(
+      latitude: lat,
+      longitude: lng,
       radiusKm: 10,
-    ).listen((items) {
-      state = state.copyWith(nearbyBroadcasts: items);
+    )
+        .listen(
+      (items) {
+        _loadingTimeout?.cancel();
+        state = state.copyWith(nearbyBroadcasts: items, isLoading: false);
+      },
+      onError: (error) {
+        _loadingTimeout?.cancel();
+        debugPrint('Nearby broadcasts stream error: $error');
+        state = state.copyWith(isLoading: false);
+      },
+    );
+
+    // Timeout loading after 30 seconds
+    _loadingTimeout = Timer(const Duration(seconds: 30), () {
+      if (state.isLoading) {
+        debugPrint('Broadcast loading timed out');
+        state = state.copyWith(isLoading: false);
+      }
     });
   }
 
   Future<void> createBroadcast({
-    required String title,
+    required String category,
     required String message,
     required double lat,
     required double lng,
@@ -83,20 +128,36 @@ class BroadcastController extends Notifier<BroadcastState> {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
 
+    // Get actual location if not provided
+    double actualLat = lat;
+    double actualLng = lng;
+
+    if (actualLat == 0 || actualLng == 0) {
+      final pos = await GeoService().getCurrentLocation();
+      actualLat = pos?.latitude ?? 24.8607;
+      actualLng = pos?.longitude ?? 67.0011;
+    }
+
     final broadcast = BroadcastModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: '',
       authorId: userId,
-      title: title,
+      category: category,
       message: message,
-      latitude: lat,
-      longitude: lng,
-      radiusKm: radiusKm,
-      severity: severity,
+      latitude: actualLat,
+      longitude: actualLng,
       imageUrl: imageUrl,
       createdAt: DateTime.now(),
+      severity: BroadcastSeverity.info,
+      radiusKm: radiusKm,
+      seenCount: 0,
+      verifiedCount: 0,
     );
 
     await FirestoreService.instance.createBroadcast(broadcast);
+  }
+
+  Future<void> deleteBroadcast(String broadcastId) async {
+    await FirestoreService.instance.deleteBroadcast(broadcastId);
   }
 
   Future<void> addComment(String broadcastId, String message) async {

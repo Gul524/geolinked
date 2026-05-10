@@ -5,6 +5,8 @@ import 'package:geolinked/feature/broadcast/broadcast_controller.dart';
 import 'package:geolinked/feature/broadcast/broadcast_sheet/broadcast_sheet.dart';
 import 'package:geolinked/feature/broadcast/widgets/broadcast_header_widget.dart';
 import 'package:geolinked/feature/broadcast/widgets/broadcast_list_item_widget.dart';
+import 'package:geolinked/shared/widgets/shimmer_loading_widget.dart';
+import 'package:geolinked/shared/widgets/empty_state_widget.dart';
 
 class BroadcastScreen extends ConsumerStatefulWidget {
   const BroadcastScreen({super.key});
@@ -31,56 +33,129 @@ class _BroadcastScreenState extends ConsumerState<BroadcastScreen> {
 
     final Color divider = Theme.of(
       context,
-    ).colorScheme.onSurface.withValues(alpha: 0.08);
+    ).colorScheme.onSurface.withOpacity(0.08);
 
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: <Widget>[
-            BroadcastHeaderWidget(
-              subtitle: controller.subtitle,
-              onCreatePressed: () async {
-                final result = await BroadcastSheet.showSheet(context);
-                if (!context.mounted || result == null) {
-                  return;
-                }
-
-                await controller.createBroadcast(
-                  title: result.category,
-                  message: result.question,
-                  lat: 24.8607,
-                  lng: 67.0011,
-                  radiusKm: result.radiusMeters / 1000,
-                );
-
-                AppMessaging.showSuccess(
-                  context,
-                  'Broadcast shared successfully.',
-                );
-              },
-            ),
-            const SizedBox(height: 2),
-            Expanded(
-              child: ListView.separated(
-                itemCount: state.allBroadcasts.length,
-                separatorBuilder: (_, _) => Divider(height: 1, color: divider),
-                itemBuilder: (BuildContext context, int index) {
-                  final BroadcastModel item = state.allBroadcasts[index];
-                  return BroadcastListItemWidget(
-                    item: item,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => BroadcastDiscussionScreen(item: item),
-                        ),
-                      );
-                    },
-                  );
-                },
+    if (state.isLoading) {
+      return Scaffold(
+        body: SafeArea(
+          child: Column(
+            children: [
+              BroadcastHeaderWidget(
+                subtitle: 'Finding nearby broadcasts...',
+                onCreatePressed: () {},
               ),
-            ),
-          ],
+              Expanded(child: ShimmerLoadingWidget.list(itemHeight: 110)),
+            ],
+          ),
         ),
+      );
+    }
+
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        body: SafeArea(
+          child: Column(
+            children: <Widget>[
+              BroadcastHeaderWidget(subtitle: controller.subtitle),
+              TabBar(
+                indicatorColor: Theme.of(context).colorScheme.primary,
+                labelColor: Theme.of(context).colorScheme.primary,
+                unselectedLabelColor: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withOpacity(0.5),
+                tabs: const [
+                  Tab(text: 'Community'),
+                  Tab(text: 'My Alerts'),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _buildContent(context, state.nearbyBroadcasts, divider),
+                    _buildContent(context, state.myBroadcasts, divider),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent(
+    BuildContext context,
+    List<BroadcastModel> broadcasts,
+    Color divider,
+  ) {
+    if (broadcasts.isEmpty) {
+      final bool isNearby =
+          broadcasts == ref.read(broadcastControllerProvider).nearbyBroadcasts;
+      return EmptyStateWidget(
+        icon: Icons.campaign_outlined,
+        title: isNearby ? 'No Broadcasts Nearby' : 'No Alerts Sent',
+        message: isNearby
+            ? 'Stay informed about what is happening around you. Start by sharing an update!'
+            : 'You haven\'t shared any alerts yet. Keep your community safe by sharing updates!',
+        actionLabel: isNearby ? null : 'Broadcast Now',
+        onAction: isNearby
+            ? null
+            : () async {
+                final result = await BroadcastSheet.showSheet(context);
+                if (result != null) {
+                  ref
+                      .read(broadcastControllerProvider.notifier)
+                      .createBroadcast(
+                        category: result.category,
+                        message: result.question,
+                        lat: 24.8607,
+                        lng: 67.0011,
+                        radiusKm: result.radiusMeters / 1000,
+                        imageUrl: result.imageUrl,
+                      );
+                }
+              },
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.read(broadcastControllerProvider.notifier).initialize(context);
+      },
+      color: Theme.of(context).colorScheme.primary,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: broadcasts.length,
+        separatorBuilder: (_, _) => Divider(height: 1, color: divider),
+        itemBuilder: (BuildContext context, int index) {
+          final BroadcastModel item = broadcasts[index];
+          final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+          final bool isOwner = item.authorId == currentUserId;
+
+          return BroadcastListItemWidget(
+            item: item,
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => BroadcastDiscussionScreen(item: item),
+                ),
+              );
+            },
+            onDelete: isOwner
+                ? () async {
+                    await ref
+                        .read(broadcastControllerProvider.notifier)
+                        .deleteBroadcast(item.id);
+                    if (context.mounted) {
+                      AppMessaging.showSuccess(context, 'Broadcast deleted.');
+                    }
+                  }
+                : null,
+          );
+        },
       ),
     );
   }

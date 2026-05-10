@@ -10,6 +10,7 @@ import 'package:geolinked/feature/auth/signup/terms_conditions_screen.dart';
 import 'package:geolinked/feature/home/home_screen.dart';
 import 'package:geolinked/services/background_service.dart';
 import 'package:geolinked/feature/profile/privacy_policy_screen.dart';
+import 'package:geolinked/utils/app_navigator.dart';
 
 
 Future<void> main() async {
@@ -43,6 +44,7 @@ class MainApp extends ConsumerWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      navigatorKey: navigatorKey,
       title: 'GeoLinked',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

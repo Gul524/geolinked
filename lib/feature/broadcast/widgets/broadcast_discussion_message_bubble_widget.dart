@@ -4,10 +4,12 @@ import 'package:geolinked/feature/broadcast/broadcast_discussion_controller.dart
 class BroadcastDiscussionMessageBubbleWidget extends StatelessWidget {
   const BroadcastDiscussionMessageBubbleWidget({
     required this.message,
+    this.onDelete,
     super.key,
   });
 
   final BroadcastDiscussionMessage message;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -36,11 +38,14 @@ class BroadcastDiscussionMessageBubbleWidget extends StatelessWidget {
                       context,
                     ).colorScheme.onSurface.withValues(alpha: 0.06),
             ),
-            child: Text(
-              message.text,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: self ? Colors.white : null,
-                height: 1.35,
+            child: InkWell(
+              onLongPress: onDelete,
+              child: Text(
+                message.text,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: self ? Colors.white : null,
+                  height: 1.35,
+                ),
               ),
             ),
           ),

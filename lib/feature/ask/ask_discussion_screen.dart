@@ -51,7 +51,42 @@ class _AskDiscussionScreenState extends ConsumerState<AskDiscussionScreen> {
                   AskQuestionCardWidget(item: widget.item),
                   ...state.messages.map(
                     (AskDiscussionMessage message) =>
-                        AskMessageBubbleWidget(message: message),
+                        AskMessageBubbleWidget(
+                      message: message,
+                      onDelete: message.isCurrentUser
+                          ? () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Delete Comment?'),
+                                  content: const Text(
+                                      'Are you sure you want to delete this comment?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      child: const Text('Delete',
+                                          style: TextStyle(color: Colors.red)),
+                                    ),
+                                  ],
+                                ),
+                              );
+
+                              if (confirm == true) {
+                                await controller.deleteComment(message.id);
+                                if (context.mounted) {
+                                  AppMessaging.showSuccess(
+                                      context, 'Comment deleted.');
+                                }
+                              }
+                            }
+                          : null,
+                    ),
                   ),
                   AskResolveBannerWidget(
                     resolved: state.isResolved,

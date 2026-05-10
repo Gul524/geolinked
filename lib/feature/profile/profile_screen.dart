@@ -92,12 +92,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(height: 24),
                   
                   _SectionHeader(title: 'App Settings'),
-                  _SettingTile(
-                    icon: Icons.notifications_none_rounded,
-                    title: 'Notifications',
-                    subtitle: 'Manage alerts and sounds',
-                    onTap: () {},
-                  ),
+                 
                   _SettingTile(
                     icon: Icons.privacy_tip_outlined,
                     title: 'Privacy Policy',
