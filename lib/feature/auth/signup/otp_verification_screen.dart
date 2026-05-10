@@ -40,6 +40,8 @@ class OtpVerificationScreen extends ConsumerWidget {
                     'We\'ve sent a verification link to $email. Please click the link to continue.',
               ),
               const SizedBox(height: 40),
+              _SpamWarningBox(),
+              const SizedBox(height: 24),
               CustomButtonWidget(
                 label: state.isSubmitting ? 'Checking...' : 'Check Verification Status',
                 onPressed: state.isSubmitting
@@ -70,6 +72,35 @@ class OtpVerificationScreen extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+class _SpamWarningBox extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.amber.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amber.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline, color: Colors.amber),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Pro Tip: If you don\'t see the email, please check your Spam or Junk folder.',
+              style: TextStyle(
+                color: Colors.amber[900],
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

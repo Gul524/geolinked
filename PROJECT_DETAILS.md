@@ -8,6 +8,8 @@ Main features:
 - **Asks**: Location-targeted queries (e.g., "Is the shop open?").
 - **Broadcasts**: News/alerts (e.g., "Traffic jam ahead") shared in a radius.
 - **Interactive Map**: Live view of community activity using Open Street Map (OSM).
+- **Place Search**: Global search for locations using the OSM Nominatim API.
+- **Current Location Focus**: Quick-access button to center the map on the user's live position.
 - **Radius Notifications**: Intelligent push notifications for nearby events.
 
 ## 2. Tech Stack
@@ -36,7 +38,7 @@ Main features:
 ## 4. Key Services
 - **FirestoreService**: Handles all database operations including geohashed writes and radius queries.
 - **NotificationService**: Manages FCM tokens, local notifications, and geohash-based topic subscriptions.
-- **GeoService**: Tracks live user location and manages the `geo_{geohash}` topic fallback.
+- **GeoService**: Tracks live user location, manages the `geo_{geohash}` topic fallback, and provides OSM-based place search via Nominatim.
 - **LocalStorageService**: Manages Hive-based persistence for faster offline startup.
 
 ## 5. Firebase Schema

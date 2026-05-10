@@ -43,7 +43,10 @@ class SignupController extends Notifier<SignupState> {
     if (state.isSubmitting) return;
 
     if (!state.termsAccepted) {
-      AppMessaging.showWarning(context, 'You must agree to the Terms & Conditions.');
+      AppMessaging.showWarning(
+        context,
+        'You must agree to the Terms & Conditions.',
+      );
       return;
     }
 
@@ -84,10 +87,9 @@ class SignupController extends Notifier<SignupState> {
           context,
           'Account created! Please check your email to verify.',
         );
-        Navigator.of(context).pushNamed(
-          AppRoutes.otp,
-          arguments: emailController.text.trim(),
-        );
+        Navigator.of(
+          context,
+        ).pushNamed(AppRoutes.otp, arguments: emailController.text.trim());
       }
     } on FirebaseAuthException catch (e) {
       if (context.mounted) {

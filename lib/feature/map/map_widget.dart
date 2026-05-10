@@ -1,9 +1,9 @@
 import 'dart:async';
-
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolinked/feature/home/home_controller.dart';
 import 'package:geolinked/feature/map/map_controller.dart';
 import 'package:geolinked/feature/map/map_state.dart';
-import 'package:geolinked/utils/exports.dart';
+import 'package:geolinked/utils/app_exports.dart';
 import 'package:latlong2/latlong.dart';
 
 class HomeMapWidget extends ConsumerStatefulWidget {
@@ -16,6 +16,14 @@ class HomeMapWidget extends ConsumerStatefulWidget {
 class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
   static const LatLng _defaultCenter = LatLng(24.8607, 67.0011);
   final MapController _mapController = MapController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(homeMapControllerProvider.notifier).initialize();
+    });
+  }
 
   List<Marker> _buildMarkers(HomeMapState state) {
     return <Marker>[
@@ -88,7 +96,7 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
 
     final Color onSurface = Theme.of(context).colorScheme.onSurface;
     final List<Marker> markers = _buildMarkers(state);
-    final LatLng initialCenter = state.targetLocation ?? _defaultCenter;
+    final LatLng initialCenter = state.currentLocation ?? _defaultCenter;
 
     final List<LatLng> routePoints = <LatLng>[
       if (state.currentLocation != null) state.currentLocation!,
@@ -146,52 +154,130 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
               ),
             ],
           ),
+          // Search Bar
           Positioned(
             top: 14,
             left: 14,
             right: 14,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.94),
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: <BoxShadow>[
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+            child: Column(
+              children: <Widget>[
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.94),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: <Widget>[
-                    const Icon(
-                      Icons.public_rounded,
-                      color: Color(0xFF007AFF),
-                      size: 18,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 2,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Live community map',
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: onSurface,
-                          fontWeight: FontWeight.w700,
+                    child: Row(
+                      children: <Widget>[
+                        const Icon(
+                          Icons.search,
+                          color: Color(0xFF007AFF),
+                          size: 20,
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            onChanged: mapController.searchPlaces,
+                            decoration: const InputDecoration(
+                              hintText: 'Search places...',
+                              border: InputBorder.none,
+                              isDense: true,
+                            ),
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: onSurface,
+                                ),
+                          ),
+                        ),
+                        if (state.isLoading)
+                          const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          ),
+                      ],
                     ),
-                    Text(
-                      'English',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: onSurface.withValues(alpha: 0.65),
-                        fontWeight: FontWeight.w600,
-                      ),
+                  ),
+                ),
+                if (state.searchResults.isNotEmpty)
+                  Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: <BoxShadow>[
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      padding: EdgeInsets.zero,
+                      itemCount: state.searchResults.length,
+                      separatorBuilder: (context, index) =>
+                          const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final result = state.searchResults[index];
+                        return ListTile(
+                          title: Text(
+                            result.displayName,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          onTap: () {
+                            mapController.selectSearchResult(result);
+                            FocusScope.of(context).unfocus();
+                          },
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          // My Location Button
+          Positioned(
+            bottom: state.isConfirmingLocation ? 100 : 20,
+            left: 20,
+            child: GestureDetector(
+              onTap: mapController.moveToCurrentLocation,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: <BoxShadow>[
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
                     ),
                   ],
+                ),
+                child: const Icon(
+                  Icons.my_location,
+                  color: Color(0xFF007AFF),
+                  size: 22,
                 ),
               ),
             ),

@@ -27,21 +27,6 @@ class AskHistoryHeaderWidget extends StatelessWidget {
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
-              TextButton.icon(
-                onPressed: onCreatePressed,
-                style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.primary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-                icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
-                label: const Text('Ask New'),
-              ),
             ],
           ),
           const SizedBox(height: 2),

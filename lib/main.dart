@@ -1,7 +1,14 @@
-import 'package:geolinked/feature/auth/signup/terms_conditions_screen.dart';
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:geolinked/firebase_options.dart';
+import 'package:geolinked/feature/splash/splash_screen.dart';
+import 'package:geolinked/feature/onboarding/onboarding_screen.dart';
+import 'package:geolinked/feature/auth/login/login_screen.dart';
+import 'package:geolinked/feature/auth/signup/signup_screen.dart';
+import 'package:geolinked/feature/auth/signup/otp_verification_screen.dart';
+import 'package:geolinked/feature/auth/signup/terms_conditions_screen.dart';
+import 'package:geolinked/feature/home/home_screen.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

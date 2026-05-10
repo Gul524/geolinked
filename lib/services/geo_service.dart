@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolinked/configs/providers/user_provider.dart';
+import 'package:geolinked/feature/map/map_state.dart';
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -36,19 +38,29 @@ class GeoService {
   StreamSubscription<Position>? _positionSubscription;
   String? _currentGeoTopic;
 
-  /// Starts listening to location changes and updates Firestore.
-  void startLocationTracking(WidgetRef ref) async {
+  /// Gets the current position of the device.
+  Future<Position?> getCurrentLocation() async {
     bool serviceEnabled;
     LocationPermission permission;
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return;
+    if (!serviceEnabled) return null;
 
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return;
+      if (permission == LocationPermission.denied) return null;
     }
+
+    if (permission == LocationPermission.deniedForever) return null;
+
+    return await Geolocator.getCurrentPosition();
+  }
+
+  /// Starts listening to location changes and updates Firestore.
+  void startLocationTracking(WidgetRef ref) async {
+    final Position? position = await getCurrentLocation();
+    if (position == null) return;
 
     _positionSubscription = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
@@ -126,6 +138,33 @@ class GeoService {
       return locations.isNotEmpty ? locations : null;
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<List<SearchResult>> searchPlaces(String query) async {
+    try {
+      final Response<dynamic> response = await Dio().get<dynamic>(
+        'https://nominatim.openstreetmap.org/search',
+        queryParameters: <String, dynamic>{
+          'q': query,
+          'format': 'json',
+          'limit': 5,
+        },
+        options: Options(
+          headers: <String, String>{'User-Agent': 'GeolinkedApp/1.0'},
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data as List<dynamic>;
+        return data
+            .map((dynamic e) => SearchResult.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      return <SearchResult>[];
+    } catch (e) {
+      debugPrint('Search error: $e');
+      return <SearchResult>[];
     }
   }
 }

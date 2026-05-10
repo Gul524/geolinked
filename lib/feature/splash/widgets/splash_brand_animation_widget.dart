@@ -61,28 +61,23 @@ class _SplashBrandAnimationWidgetState extends State<SplashBrandAnimationWidget>
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Container(
-                width: 56,
-                height: 56,
+                width: 120,
+                height: 120,
                 decoration: BoxDecoration(
-                  color: widget.primary,
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(24),
                   boxShadow: <BoxShadow>[
                     BoxShadow(
-                      color: widget.primary.withValues(alpha: 0.28),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
+                      color: widget.primary.withValues(alpha: 0.15),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
                     ),
                   ],
                 ),
-                child: const Center(
-                  child: Text(
-                    'G',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                      height: 1,
-                    ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    fit: BoxFit.cover,
                   ),
                 ),
               ),

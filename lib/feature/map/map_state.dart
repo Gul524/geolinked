@@ -1,5 +1,25 @@
 import 'package:latlong2/latlong.dart';
 
+class SearchResult {
+  const SearchResult({
+    required this.displayName,
+    required this.latitude,
+    required this.longitude,
+  });
+
+  final String displayName;
+  final double latitude;
+  final double longitude;
+
+  factory SearchResult.fromJson(Map<String, dynamic> json) {
+    return SearchResult(
+      displayName: json['display_name'] as String,
+      latitude: double.parse(json['lat'] as String),
+      longitude: double.parse(json['lon'] as String),
+    );
+  }
+}
+
 class HomeMapState {
   const HomeMapState({
     required this.targetLocation,
@@ -13,6 +33,7 @@ class HomeMapState {
     this.isLoading = false,
     this.isTargetSlecting = false,
     this.isConfirmingLocation = false,
+    this.searchResults = const <SearchResult>[],
   });
 
   final LatLng? targetLocation;
@@ -26,6 +47,7 @@ class HomeMapState {
   final String? errorMessage;
   final bool isTargetSlecting;
   final bool isConfirmingLocation;
+  final List<SearchResult> searchResults;
 
   HomeMapState copyWith({
     LatLng? targetLocation,
@@ -44,6 +66,7 @@ class HomeMapState {
     bool? isConfirmingLocation,
     bool clearErrorMessage = false,
     String? targetLocationName,
+    List<SearchResult>? searchResults,
   }) {
     return HomeMapState(
       targetLocation: clearTargetLocation
@@ -66,7 +89,8 @@ class HomeMapState {
           : (errorMessage ?? this.errorMessage),
       targetLocationName: clearTargetLocation
           ? null
-          : (targetLocationName ?? this.targetLocationName),    
+          : (targetLocationName ?? this.targetLocationName),
+      searchResults: searchResults ?? this.searchResults,
     );
   }
 }

@@ -13,7 +13,6 @@ The Map is your main dashboard.
 - **Nearby Markers**:
   - **Green Dots**: "Asks" or questions from people near you.
   - **Blue Dots**: "Broadcasts" or alerts from people near you.
-- **Exploring**: You can pan and zoom the map to see activity in different neighborhoods.
 
 ## 3. Asking a Question (Asks)
 1. Tap the **"Ask"** button on the home screen.

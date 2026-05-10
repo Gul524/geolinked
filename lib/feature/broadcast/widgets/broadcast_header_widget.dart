@@ -27,21 +27,7 @@ class BroadcastHeaderWidget extends StatelessWidget {
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
-              TextButton.icon(
-                onPressed: onCreatePressed,
-                style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.primary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-                icon: const Icon(Icons.campaign_outlined, size: 18),
-                label: const Text('Broadcast'),
-              ),
+             
             ],
           ),
           const SizedBox(height: 2),

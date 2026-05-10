@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:geolinked/feature/auth/login/login_screen.dart';
 import 'package:geolinked/feature/auth/signup/otp_verification_screen.dart';
 import 'package:geolinked/feature/auth/signup/signup_screen.dart';

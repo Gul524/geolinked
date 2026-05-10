@@ -3,6 +3,7 @@ import 'package:geolinked/feature/broadcast/broadcast_controller.dart';
 import 'package:geolinked/feature/map/map_state.dart';
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:geolinked/services/geo_service.dart';
 
 class ConfirmedMapTarget {
   const ConfirmedMapTarget({required this.point, this.locationName});
@@ -34,11 +35,64 @@ class HomeMapController extends Notifier<HomeMapState> {
     });
 
     return const HomeMapState(
-      targetLocation: _defaultTargetLocation,
+      targetLocation: null,
       currentLocation: null,
       broadcasts: <LatLng>[],
       points: <LatLng>[],
     );
+  }
+
+  Future<void> initialize() async {
+    final position = await GeoService().getCurrentLocation();
+    if (position != null) {
+      final point = LatLng(position.latitude, position.longitude);
+      state = state.copyWith(
+        currentLocation: point,
+        targetLocation: point,
+        cameraTarget: point,
+        cameraZoom: 15,
+      );
+    } else {
+      // Fallback to default if location is denied
+      state = state.copyWith(
+        targetLocation: _defaultTargetLocation,
+        cameraTarget: _defaultTargetLocation,
+        cameraZoom: 13,
+      );
+    }
+  }
+
+  void moveToCurrentLocation() {
+    if (state.currentLocation != null) {
+      state = state.copyWith(
+        cameraTarget: state.currentLocation,
+        cameraZoom: 16,
+      );
+    }
+  }
+
+  Future<void> searchPlaces(String query) async {
+    if (query.isEmpty) {
+      state = state.copyWith(searchResults: <SearchResult>[]);
+      return;
+    }
+
+    state = state.copyWith(isLoading: true);
+    final results = await GeoService().searchPlaces(query);
+    state = state.copyWith(searchResults: results, isLoading: false);
+  }
+
+  void selectSearchResult(SearchResult result) {
+    final point = LatLng(result.latitude, result.longitude);
+    state = state.copyWith(
+      cameraTarget: point,
+      cameraZoom: 17,
+      searchResults: <SearchResult>[], // Clear results after selection
+    );
+  }
+
+  void clearSearchResults() {
+    state = state.copyWith(searchResults: <SearchResult>[]);
   }
 
   LatLng? get targetLocation => state.targetLocation;

@@ -2,6 +2,9 @@ import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/feature/home/home_controller.dart';
 import 'package:geolinked/feature/profile/profile_controller.dart';
 import 'package:geolinked/feature/map/map_widget.dart';
+import 'package:geolinked/feature/ask/ask_screen.dart';
+import 'package:geolinked/feature/broadcast/broadcast_screen.dart';
+import 'package:geolinked/feature/profile/profile_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
