@@ -1,3 +1,4 @@
+import 'package:geolinked/configs/providers/user_provider.dart';
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/feature/profile/profile_controller.dart';
 import 'package:geolinked/feature/profile/widgets/helpfulness_score_card_widget.dart';
@@ -137,6 +138,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       subtitle: 'Hide name from responses',
                       value: state.anonymousModeEnabled,
                       onChanged: controller.toggleAnonymousMode,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ProfileSectionCardWidget(
+                  title: 'ACCOUNT',
+                  children: <Widget>[
+                    ActionSettingRowWidget(
+                      leading: '🚪',
+                      title: 'Logout',
+                      subtitle: 'Sign out of your account',
+                      onTap: () async {
+                        await ref.read(userProvider.notifier).logout();
+                        if (context.mounted) {
+                          Navigator.of(context).pushNamedAndRemoveUntil(
+                            AppRoutes.login,
+                            (route) => false,
+                          );
+                        }
+                      },
                     ),
                   ],
                 ),

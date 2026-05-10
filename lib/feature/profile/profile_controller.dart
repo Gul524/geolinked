@@ -1,3 +1,4 @@
+import 'package:geolinked/configs/providers/user_provider.dart';
 import 'package:geolinked/utils/app_exports.dart';
 
 class ProfileState {
@@ -100,125 +101,39 @@ class ProfileState {
 
 class ProfileController extends Notifier<ProfileState> {
   static const String _localKey = 'profile_state';
-  static const String _apiPath = '/profile';
 
   static const ProfileState _fallbackProfile = ProfileState(
-    userName: 'Ahmad Siddiqui',
-    handle: '@ahmad_geo',
-    city: 'Karachi, PK',
-    helpfulnessScore: 75,
-    helpfulVotesThisMonth: 142,
+    userName: 'User',
+    handle: '@user',
+    city: 'Location Not Set',
+    helpfulnessScore: 0,
+    helpfulVotesThisMonth: 0,
     askRadiusMeters: 300,
     broadcastRadiusKm: 10,
     pushNotificationsEnabled: true,
     anonymousModeEnabled: false,
     quietHours: '11:00 PM - 7:00 AM',
-    emergencyContactCount: 2,
+    emergencyContactCount: 0,
   );
 
   @override
   ProfileState build() {
-    return _fallbackProfile;
+    // Watch the global user provider for name/email
+    final user = ref.watch(userProvider);
+    
+    return _fallbackProfile.copyWith(
+      userName: user?.name ?? 'User',
+      handle: '@${user?.name?.toLowerCase().replaceAll(' ', '_') ?? 'user'}',
+    );
   }
 
   Future<void> initialize(BuildContext context) async {
-    await _loadLocal(context);
-    await _loadApi(context);
-  }
-
-  Future<void> _loadLocal(BuildContext context) async {
-    final ApiResult<ProfileState> localResult =
-        DataFlowService.loadLocal<ProfileState>(
-          reader: _readLocalProfile,
-          emptyMessage: 'No local profile cache found.',
-        );
-
-    if (!localResult.success || localResult.data == null) {
-      return;
+    final raw = LocalStorageService.instance.get<Map<dynamic, dynamic>>(_localKey);
+    if (raw != null) {
+      state = ProfileState.fromJson(Map<String, dynamic>.from(raw));
     }
-
-    state = localResult.data!;
-    AppMessaging.showInfo(context, 'Loaded profile from local storage.');
-  }
-
-  Future<void> _loadApi(BuildContext context) async {
-    final ApiResult<ProfileState> apiResult =
-        await DataFlowService.loadApi<ProfileState>(
-          request: () => ApiService.instance.get(_apiPath),
-          parser: _parseProfile,
-        );
-
-    if (!apiResult.success || apiResult.data == null) {
-      AppMessaging.showWarning(
-        context,
-        apiResult.errorMessage ?? 'Could not sync profile from server.',
-      );
-      return;
-    }
-
-    state = apiResult.data!;
-    await _saveLocal(state);
-    AppMessaging.showSuccess(context, 'Profile synced from server.');
-  }
-
-  Future<void> createProfile({
-    required BuildContext context,
-    required Map<String, dynamic> payload,
-  }) async {
-    final ApiResult<dynamic> result = await ApiService.instance.post(
-      _apiPath,
-      data: payload,
-    );
-
-    if (!result.success) {
-      AppMessaging.showError(
-        context,
-        result.errorMessage ?? 'Could not create profile.',
-      );
-      return;
-    }
-
-    AppMessaging.showSuccess(context, 'Profile created successfully.');
-    await _loadApi(context);
-  }
-
-  Future<void> updateProfile({
-    required BuildContext context,
-    required Map<String, dynamic> payload,
-  }) async {
-    final ApiResult<dynamic> result = await ApiService.instance.put(
-      _apiPath,
-      data: payload,
-    );
-
-    if (!result.success) {
-      AppMessaging.showError(
-        context,
-        result.errorMessage ?? 'Could not update profile.',
-      );
-      return;
-    }
-
-    AppMessaging.showSuccess(context, 'Profile updated successfully.');
-    await _loadApi(context);
-  }
-
-  Future<void> deleteProfile(BuildContext context) async {
-    final ApiResult<dynamic> result = await ApiService.instance.delete(
-      _apiPath,
-    );
-
-    if (!result.success) {
-      AppMessaging.showError(
-        context,
-        result.errorMessage ?? 'Could not delete profile.',
-      );
-      return;
-    }
-
-    state = _fallbackProfile;
-    await LocalStorageService.instance.delete(_localKey);
-    AppMessaging.showSuccess(context, 'Profile deleted successfully.');
+    
+    // In a real app, we'd fetch extra profile data from Firestore here
   }
 
   void setAskRadiusMeters(double value) {
@@ -241,35 +156,8 @@ class ProfileController extends Notifier<ProfileState> {
     _saveLocal(state);
   }
 
-  ProfileState? _readLocalProfile() {
-    final Map<dynamic, dynamic>? raw = LocalStorageService.instance
-        .get<Map<dynamic, dynamic>>(_localKey);
-    if (raw == null) {
-      return null;
-    }
-
-    return ProfileState.fromJson(Map<String, dynamic>.from(raw));
-  }
-
   Future<void> _saveLocal(ProfileState value) async {
-    final ApiResult<void> saveResult = await DataFlowService.saveLocal(
-      writer: () => LocalStorageService.instance.put(_localKey, value.toJson()),
-    );
-
-    if (!saveResult.success) {
-      // Do not block UX when cache write fails.
-    }
-  }
-
-  ProfileState _parseProfile(dynamic payload) {
-    final dynamic raw = payload is Map<String, dynamic>
-        ? payload['data']
-        : payload;
-    if (raw is! Map<String, dynamic>) {
-      return _fallbackProfile;
-    }
-
-    return ProfileState.fromJson(raw);
+    await LocalStorageService.instance.put(_localKey, value.toJson());
   }
 }
 

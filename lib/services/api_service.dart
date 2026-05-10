@@ -1,6 +1,9 @@
+import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:geolinked/configs/constants.dart';
 
 class ApiResult<T> {
   const ApiResult({
@@ -30,18 +33,33 @@ class ApiResult<T> {
 
 class ApiService {
   ApiService._internal() {
-    _dio = Dio(
-      BaseOptions(
-        connectTimeout: const Duration(seconds: 20),
-        sendTimeout: const Duration(seconds: 20),
-        receiveTimeout: const Duration(seconds: 20),
-        responseType: ResponseType.json,
-        headers: <String, String>{
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      ),
-    );
+    _dio =
+        Dio(
+            BaseOptions(
+              baseUrl: AppConstants.apiBaseUrl,
+              connectTimeout: const Duration(seconds: 20),
+              sendTimeout: const Duration(seconds: 20),
+              receiveTimeout: const Duration(seconds: 20),
+              responseType: ResponseType.json,
+              headers: <String, String>{
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
+            ),
+          )
+          ..interceptors.add(
+            LogInterceptor(
+              request: true,
+              requestBody: true,
+              responseBody: true,
+              error: true,
+              logPrint: (Object object) {
+                // You can customize logging here, e.g., using a logging package
+                // For simplicity, we're just printing to console
+                log(jsonEncode(object));
+              },
+            ),
+          );
   }
 
   static final ApiService instance = ApiService._internal();
@@ -49,6 +67,10 @@ class ApiService {
   late final Dio _dio;
 
   Dio get client => _dio;
+
+  void addInterceptor(Interceptor interceptor) {
+    _dio.interceptors.add(interceptor);
+  }
 
   void setBaseUrl(String baseUrl) {
     _dio.options.baseUrl = baseUrl;

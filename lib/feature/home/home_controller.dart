@@ -1,9 +1,11 @@
-import 'package:geolinked/utils/app_exports.dart';
+import 'package:geolinked/feature/ask/ask_controller.dart';
 import 'package:geolinked/feature/ask/ask_sheet/ask_sheet.dart';
 import 'package:geolinked/feature/ask/ask_sheet/ask_sheet_controller.dart';
+import 'package:geolinked/feature/broadcast/broadcast_controller.dart';
 import 'package:geolinked/feature/broadcast/broadcast_sheet/broadcast_sheet.dart';
 import 'package:geolinked/feature/broadcast/broadcast_sheet/broadcast_sheet_controller.dart';
 import 'package:geolinked/feature/map/map_controller.dart';
+import 'package:geolinked/utils/app_exports.dart';
 import 'package:latlong2/latlong.dart';
 
 enum HomeTargetAction { ask, broadcast }
@@ -100,6 +102,14 @@ class HomeController extends Notifier<HomeState> {
     );
 
     if (context.mounted && askResult != null) {
+      // Submit to Firebase
+      await ref.read(askControllerProvider.notifier).createAsk(
+            title: askResult.subject,
+            description: askResult.question,
+            lat: point.latitude,
+            lng: point.longitude,
+          );
+
       AppMessaging.showSuccess(
         context,
         'Query submitted for ${askResult.radiusMeters}m nearby people.',
@@ -128,6 +138,15 @@ class HomeController extends Notifier<HomeState> {
         );
 
     if (context.mounted && broadcastResult != null) {
+      // Submit to Firebase
+      await ref.read(broadcastControllerProvider.notifier).createBroadcast(
+            title: broadcastResult.category,
+            message: broadcastResult.question,
+            lat: point.latitude,
+            lng: point.longitude,
+            radiusKm: broadcastResult.radiusMeters / 1000,
+          );
+
       AppMessaging.showSuccess(
         context,
         '${broadcastResult.category} broadcast shared in ${broadcastResult.radiusMeters}m radius.',

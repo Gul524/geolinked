@@ -1,4 +1,9 @@
+import 'dart:async';
+
 import 'package:geocoding/geocoding.dart';
+import 'package:geolinked/configs/providers/user_provider.dart';
+import 'package:geolinked/utils/app_exports.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 class GeoRadiusInfo {
@@ -25,11 +30,40 @@ class GeoRadiusInfo {
 
 class GeoService {
   GeoService._internal();
-
   static final GeoService _instance = GeoService._internal();
+  factory GeoService() => _instance;
 
-  factory GeoService() {
-    return _instance;
+  StreamSubscription<Position>? _positionSubscription;
+
+  /// Starts listening to location changes and updates Firestore.
+  void startLocationTracking(WidgetRef ref) async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) return;
+    }
+
+    _positionSubscription = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 100, // Update every 100 meters
+      ),
+    ).listen((Position position) {
+      ref.read(userProvider.notifier).updateLocation(
+        position.latitude,
+        position.longitude,
+      );
+    });
+  }
+
+  void stopLocationTracking() {
+    _positionSubscription?.cancel();
   }
 
   Future<Placemark?> geopointToPlacemark({required LatLng point}) async {
@@ -38,12 +72,7 @@ class GeoService {
         point.latitude,
         point.longitude,
       );
-
-      if (placemarks.isEmpty) {
-        return null;
-      }
-
-      return placemarks.first;
+      return placemarks.isNotEmpty ? placemarks.first : null;
     } catch (_) {
       return null;
     }
@@ -52,30 +81,13 @@ class GeoService {
   Future<String?> getLocationString({required LatLng point}) async {
     try {
       final Placemark? placemark = await geopointToPlacemark(point: point);
-
-      if (placemark == null) {
-        return null;
-      }
+      if (placemark == null) return null;
 
       final List<String> addressParts = <String>[];
-
-      if (placemark.street != null && placemark.street!.isNotEmpty) {
-        addressParts.add(placemark.street!);
-      }
-
-      if (placemark.subAdministrativeArea != null &&
-          placemark.subAdministrativeArea!.isNotEmpty) {
-        addressParts.add(placemark.subAdministrativeArea!);
-      }
-
-      if (placemark.administrativeArea != null &&
-          placemark.administrativeArea!.isNotEmpty) {
-        addressParts.add(placemark.administrativeArea!);
-      }
-
-      if (placemark.country != null && placemark.country!.isNotEmpty) {
-        addressParts.add(placemark.country!);
-      }
+      if (placemark.street?.isNotEmpty ?? false) addressParts.add(placemark.street!);
+      if (placemark.subAdministrativeArea?.isNotEmpty ?? false) addressParts.add(placemark.subAdministrativeArea!);
+      if (placemark.administrativeArea?.isNotEmpty ?? false) addressParts.add(placemark.administrativeArea!);
+      if (placemark.country?.isNotEmpty ?? false) addressParts.add(placemark.country!);
 
       return addressParts.join(', ');
     } catch (_) {
@@ -85,56 +97,10 @@ class GeoService {
 
   Future<List<Location>?> getPlaceString({required String query}) async {
     try {
-      final String normalizedQuery = query.trim();
-      if (normalizedQuery.isEmpty) {
-        return null;
-      }
-
-      final List<Location> locations = await locationFromAddress(
-        normalizedQuery,
-      );
-
-      if (locations.isEmpty) {
-        return null;
-      }
-
-      return locations;
+      final List<Location> locations = await locationFromAddress(query.trim());
+      return locations.isNotEmpty ? locations : null;
     } catch (_) {
       return null;
     }
-  }
-
-  GeoRadiusInfo createGeoRadius({
-    required LatLng centerPoint,
-    required double radiusMeters,
-  }) {
-    return GeoRadiusInfo(centerPoint: centerPoint, radiusMeters: radiusMeters);
-  }
-
-  double calculateDistance({required LatLng from, required LatLng to}) {
-    final Distance distance = const Distance();
-    return distance.as(LengthUnit.Meter, from, to);
-  }
-
-  static String? getPlacemarkShortName(Placemark? placemark) {
-    if (placemark == null) {
-      return null;
-    }
-
-    if (placemark.street != null && placemark.street!.isNotEmpty) {
-      return placemark.street;
-    }
-
-    if (placemark.subAdministrativeArea != null &&
-        placemark.subAdministrativeArea!.isNotEmpty) {
-      return placemark.subAdministrativeArea;
-    }
-
-    if (placemark.administrativeArea != null &&
-        placemark.administrativeArea!.isNotEmpty) {
-      return placemark.administrativeArea;
-    }
-
-    return placemark.country;
   }
 }

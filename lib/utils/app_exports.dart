@@ -1,6 +1,8 @@
 // flutter
 export 'package:flutter/material.dart';
 export 'package:flutter_riverpod/flutter_riverpod.dart';
+export 'package:firebase_auth/firebase_auth.dart';
+export 'package:cloud_firestore/cloud_firestore.dart';
 
 // configs
 export '../configs/constants.dart';

@@ -2,125 +2,100 @@
 
 ## 1. Project Overview
 GeoLinked is a Flutter app currently set up with:
-- Riverpod-based app state management for global theme mode
+- Riverpod-based app state management for global theme mode and user session
 - Custom light and dark themes (iOS blue brand direction)
 - Animated splash flow
 - Home shell with a custom iOS-style bottom navigation bar
+- Secure Authentication flow (Login/Signup)
+- Global User state management
+- **Project Status**: [PROJECT_STATUS.md](file:///home/sulemangul/.gemini/antigravity/brain/6e23af27-db2c-4306-a072-c0ca4be16352/project_status.md) (Task Tracking)
 
 Main entry point: [lib/main.dart](lib/main.dart)
 
 ## 2. Tech Stack
-- Flutter (SDK constraint in [pubspec.yaml](pubspec.yaml))
-- Riverpod 3.x:
-  - [pubspec.yaml](pubspec.yaml)
-  - [lib/configs/providers/theme_provider.dart](lib/configs/providers/theme_provider.dart)
-- Material 3 theme setup:
-  - [lib/configs/theme/app_theme.dart](lib/configs/theme/app_theme.dart)
+- **Flutter**: SDK constraint in [pubspec.yaml](pubspec.yaml)
+- **Riverpod 3.x**:
+  - Global Theme: [lib/configs/providers/theme_provider.dart](lib/configs/providers/theme_provider.dart)
+  - Global User: [lib/configs/providers/user_provider.dart](lib/configs/providers/user_provider.dart)
+- **Dio**: API communication in [lib/services/api_service.dart](lib/services/api_service.dart)
+- **Hive**: Local storage in [lib/services/local_storage_service.dart](lib/services/local_storage_service.dart)
+- **JSON Serializable**: Data models in [lib/model/models.dart](lib/model/models.dart)
 
 ## 3. Current App Flow
 1. App starts in [lib/main.dart](lib/main.dart)
 2. Initial route is splash via [lib/utils/routes.dart](lib/utils/routes.dart)
-3. Splash controller waits 2400ms then navigates to home
+3. Splash controller waits 2400ms then navigates to home (or onboarding if needed)
 4. Home shows a tab shell with custom bottom navigation
 
 Route definitions:
-- Splash route: [lib/feature/splash/splash_screen.dart](lib/feature/splash/splash_screen.dart)
-- Home route: [lib/feature/home/home_screen.dart](lib/feature/home/home_screen.dart)
-- Route constants: [lib/utils/routes.dart](lib/utils/routes.dart)
+- Splash: [lib/feature/splash/splash_screen.dart](lib/feature/splash/splash_screen.dart)
+- Login: [lib/feature/auth/login/login_screen.dart](lib/feature/auth/login/login_screen.dart)
+- Signup: [lib/feature/auth/signup/signup_screen.dart](lib/feature/auth/signup/signup_screen.dart)
+- Home: [lib/feature/home/home_screen.dart](lib/feature/home/home_screen.dart)
 
-## 4. State Management
+## 4. Authentication Feature
+Implemented in `lib/feature/auth`:
+- **Login**: [lib/feature/auth/login/login_controller.dart](lib/feature/auth/login/login_controller.dart)
+- **Signup**: [lib/feature/auth/signup/signup_controller.dart](lib/feature/auth/signup/signup_controller.dart)
+- Uses `AuthResponse` model to handle JWT tokens and basic user info.
+- Automatically persists tokens using `LocalStorageService`.
+
+## 5. User Management
+Implemented globally via `UserProvider`:
+- **Global User State**: Holds the current `UserModel`.
+- **API Endpoints**:
+  - `GET /api/users/{id}`: Fetch full user profile.
+  - `PUT /api/users/{id}/location`: Update user's lat/lng.
+  - `PUT /api/users/{id}/notification-id`: Update Firebase Messaging token.
+- **Persistence**: User ID and Profile are cached locally for offline support.
+
+## 6. State Management
 ### Theme Mode
-Theme mode is managed globally by Riverpod:
-- Provider: [lib/configs/providers/theme_provider.dart](lib/configs/providers/theme_provider.dart)
-- Exposed API:
-  - setLight()
-  - setDark()
-  - setSystem()
-  - toggle()
+Managed by `themeModeProvider` in [lib/configs/providers/theme_provider.dart](lib/configs/providers/theme_provider.dart).
 
-App root reads this provider in [lib/main.dart](lib/main.dart) and applies:
-- theme
-- darkTheme
-- themeMode
+### User Session
+Managed by `userProvider` in [lib/configs/providers/user_provider.dart](lib/configs/providers/user_provider.dart).
+- `updateLocation()`: Updates latitude and longitude.
+- `updateNotificationId()`: Syncs FCM token to backend.
 
-## 5. Theming System
-Theme implementation is centralized in [lib/configs/theme/app_theme.dart](lib/configs/theme/app_theme.dart).
+## 7. Theming System
+Centralized in [lib/configs/theme/app_theme.dart](lib/configs/theme/app_theme.dart).
+- Primary: iOS blue family.
+- Design tokens for icons, radius, and images.
 
-### Color strategy
-- Primary: iOS blue family
-- Secondary, Surface, OnSurface, Card colors for both light and dark modes
+## 8. Shared Components
+- **Bottom Navigation**: [lib/shared/widgets/custom_bottom_navigation_bar.dart](lib/shared/widgets/custom_bottom_navigation_bar.dart)
+- **App Messaging**: [lib/shared/widgets/app_messaging.dart](lib/shared/widgets/app_messaging.dart) (Toasts/Snackbars)
+- **Custom Buttons/Fields**: Standardized UI components.
 
-### Design tokens
-- Icon size tokens: AppIconSizes
-- Card radius tokens: AppCardRadiusSizes
-- Image size tokens: AppImageSizes
+## 9. Services
+- **ApiService**: Dio wrapper with interceptors and error mapping.
+- **LocalStorageService**: Hive wrapper for persistent data.
+- **NotificationService**: Firebase Messaging integration.
+- **GeoService**: Location tracking and geocoding.
 
-### Typography
-Compact text scale is used to keep visual weight light:
-- 8 to 24 size range across label/body/title/headline styles
+## 10. Folder Structure
+- `lib/configs`: App configurations, theme, and providers.
+- `lib/feature`: Feature-based modules (auth, home, profile, etc.).
+- `lib/model`: Data models with JSON serialization.
+- `lib/services`: External service integrations.
+- `lib/shared`: Reusable widgets.
+- `lib/utils`: Helpers, extensions, and route constants.
 
-## 6. Splash Feature
-Files:
-- Screen: [lib/feature/splash/splash_screen.dart](lib/feature/splash/splash_screen.dart)
-- Controller: [lib/feature/splash/splash_controller.dart](lib/feature/splash/splash_controller.dart)
-- Animation widget: [lib/feature/splash/widgets/splash_brand_animation_widget.dart](lib/feature/splash/widgets/splash_brand_animation_widget.dart)
+## 11. Quality Status
+- Static analysis: Clean (`flutter analyze lib`).
+- Code Generation: Uses `json_serializable` and `build_runner`.
 
-What it does:
-- Uses theme colors inside build method (primary/surface/onSurface)
-- Runs entrance animation (fade, slide, scale)
-- Shows animated linear loading progress
-- Controller handles delayed navigation to home
+## 12. Firebase Migration Strategy (Fast Track)
+To meet the rapid development timeline, the project is migrating from a custom .NET backend to Firebase:
+- **Auth**: Firebase Authentication (Email/Password).
+- **Database**: Cloud Firestore for real-time geolocation data.
+- **Search**: `geoflutterfire2` for radius-based queries.
+- **Notifications**: Cloud Functions for triggering radius-based push notifications.
 
-## 7. Home + Bottom Navigation
-### Home shell
-Implemented in [lib/feature/home/home_screen.dart](lib/feature/home/home_screen.dart):
-- Uses IndexedStack for tab body switching
-- Tracks selected tab index locally
-- Uses custom shared bottom navigation component
-
-### Shared bottom navigation
-Implemented in [lib/shared/widgets/custom_bottom_navigation_bar.dart](lib/shared/widgets/custom_bottom_navigation_bar.dart):
-- iOS-style bottom bar visual treatment
-- Supports active/inactive icon colors per item
-- Uses modularized components:
-  - CustomBottomNavigationItem (item model)
-  - BottomNavRoundIcon (icon rendering)
-  - CustomBottomNavigationBar (navigation behavior and tap callback)
-
-Current tabs:
-- Map
-- Ask History
-- Broadcasts
-- Profile
-
-## 8. Shared Exports
-Barrel exports are defined in [lib/utils/exports.dart](lib/utils/exports.dart) for easier imports.
-
-## 9. Current Folder Status
-Core implemented areas:
-- App bootstrap and routing
-- Theme system
-- Splash flow
-- Home shell + custom bottom nav
-
-Feature folders exist but are not yet implemented in depth:
-- [lib/feature/ask](lib/feature/ask)
-- [lib/feature/auth](lib/feature/auth)
-- [lib/feature/broadcast](lib/feature/broadcast)
-- [lib/feature/chat](lib/feature/chat)
-- [lib/feature/map](lib/feature/map)
-- [lib/feature/profile](lib/feature/profile)
-
-## 10. Build and Quality Status
-Most recent static analysis status is clean:
-- flutter analyze lib -> No issues found
-
-## 11. Suggested Next Steps
-1. Replace placeholder tab bodies with real feature screens
-2. Move tab index state to Riverpod if cross-screen persistence is needed
-3. Add named route map for each feature module
-4. Add test coverage for:
-   - Splash navigation timing behavior
-   - Theme mode provider transitions
-   - Bottom navigation tab switch behavior
-5. Expand README summary with setup/run instructions and architecture snapshot
+## 13. Next Steps
+1. **Infrastructure**: Add `firebase_auth`, `cloud_firestore`, and `geoflutterfire2` dependencies.
+2. **Auth**: Migrate `LoginController` and `SignupController` to Firebase Auth.
+3. **Data**: Implement Firestore repositories for Asks, Broadcasts, and Comments.
+4. **Geo**: Update `GeoService` to sync user location with geohashes to Firestore.
+5. **Map**: Implement real-time radius-based querying for map markers.

@@ -50,8 +50,9 @@ class LoginScreen extends ConsumerWidget {
               Row(
                 children: <Widget>[
                   Checkbox(
-                    value: false,
-                    onChanged: (_) {},
+                    value: state.rememberMe,
+                    onChanged: (bool? value) =>
+                        controller.toggleRememberMe(value ?? false),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(4),
                     ),

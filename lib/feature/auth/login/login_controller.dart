@@ -1,18 +1,22 @@
+import 'package:geolinked/configs/providers/user_provider.dart';
+import 'package:geolinked/model/models.dart';
 import 'package:geolinked/utils/app_exports.dart';
 
 class LoginState {
-  const LoginState({required this.isSubmitting});
+  const LoginState({required this.isSubmitting, required this.rememberMe});
 
   final bool isSubmitting;
+  final bool rememberMe;
 
-  LoginState copyWith({bool? isSubmitting}) {
-    return LoginState(isSubmitting: isSubmitting ?? this.isSubmitting);
+  LoginState copyWith({bool? isSubmitting, bool? rememberMe}) {
+    return LoginState(
+      isSubmitting: isSubmitting ?? this.isSubmitting,
+      rememberMe: rememberMe ?? this.rememberMe,
+    );
   }
 }
 
 class LoginController extends Notifier<LoginState> {
-  static const String _apiPath = '/auth/login';
-
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -24,7 +28,7 @@ class LoginController extends Notifier<LoginState> {
       passwordController.dispose();
     });
 
-    return const LoginState(isSubmitting: false);
+    return const LoginState(isSubmitting: false, rememberMe: true);
   }
 
   Future<void> onLoginPressed(BuildContext context) async {
@@ -40,32 +44,44 @@ class LoginController extends Notifier<LoginState> {
     state = state.copyWith(isSubmitting: true);
 
     try {
-      final ApiResult<dynamic> result = await ApiService.instance.post(
-        _apiPath,
-        data: <String, dynamic>{
-          'email': emailController.text.trim(),
-          'password': passwordController.text.trim(),
-        },
+      final UserCredential credential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
       );
 
-      if (!result.success) {
-        AppMessaging.showError(
-          context,
-          result.errorMessage ?? 'Login failed. Please try again.',
-        );
-        return;
+      final User? firebaseUser = credential.user;
+      if (firebaseUser == null) {
+        throw 'Login failed. User not found.';
       }
 
-      final String? token = _extractToken(result.data);
-      if (token != null && token.isNotEmpty) {
-        ApiService.instance.setAuthToken(token);
-        await LocalStorageService.instance.put(
-          AppConstants.authTokenKey,
-          token,
+      // Fetch user details from Firestore
+      final DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(firebaseUser.uid)
+          .get();
+
+      if (!doc.exists) {
+        final UserModel newUser = UserModel(
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName ?? 'User',
+          email: firebaseUser.email ?? '',
         );
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(firebaseUser.uid)
+            .set(newUser.toJson());
+        ref.read(userProvider.notifier).setUser(newUser);
+      } else {
+        final UserModel user =
+            UserModel.fromJson(doc.data() as Map<String, dynamic>);
+        ref.read(userProvider.notifier).setUser(user);
       }
 
-      AppMessaging.showSuccess(context, 'Login successful. Welcome back!');
+      if (context.mounted) {
+        AppMessaging.showSuccess(context, 'Login successful. Welcome back!');
+      }
+
       await Future<void>.delayed(const Duration(milliseconds: 350));
 
       if (!context.mounted) {
@@ -73,6 +89,14 @@ class LoginController extends Notifier<LoginState> {
       }
 
       Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+    } on FirebaseAuthException catch (e) {
+      if (context.mounted) {
+        AppMessaging.showError(context, e.message ?? 'Authentication failed.');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        AppMessaging.showError(context, 'An unexpected error occurred: $e');
+      }
     } finally {
       state = state.copyWith(isSubmitting: false);
     }
@@ -107,21 +131,8 @@ class LoginController extends Notifier<LoginState> {
     return null;
   }
 
-  String? _extractToken(dynamic payload) {
-    if (payload is Map<String, dynamic>) {
-      final dynamic token =
-          payload['token'] ?? payload['accessToken'] ?? payload['authToken'];
-      if (token is String && token.isNotEmpty) {
-        return token;
-      }
-
-      final dynamic data = payload['data'];
-      if (data is Map<String, dynamic>) {
-        return _extractToken(data);
-      }
-    }
-
-    return null;
+  void toggleRememberMe(bool value) {
+    state = state.copyWith(rememberMe: value);
   }
 }
 

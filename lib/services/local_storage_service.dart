@@ -1,3 +1,4 @@
+import 'package:geolinked/configs/constants.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class LocalStorageService {
@@ -17,6 +18,22 @@ class LocalStorageService {
   Future<void> put(String key, dynamic value) async {
     await _ensureReady();
     await _defaultBox!.put(key, value);
+  }
+
+  Future<void> saveAuthToken(String token, {required bool rememberMe}) async {
+    if (rememberMe) {
+      await put(AppConstants.authTokenKey, token);
+      return;
+    }
+    await delete(AppConstants.authTokenKey);
+  }
+
+  Future<void> saveUserId(String userId) async {
+    await put('current_user_id', userId);
+  }
+
+  String? getUserId() {
+    return get<String>('current_user_id');
   }
 
   T? get<T>(String key) {

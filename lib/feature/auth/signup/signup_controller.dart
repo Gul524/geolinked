@@ -1,3 +1,5 @@
+import 'package:geolinked/configs/providers/user_provider.dart';
+import 'package:geolinked/model/models.dart';
 import 'package:geolinked/utils/app_exports.dart';
 
 class SignupState {
@@ -11,8 +13,6 @@ class SignupState {
 }
 
 class SignupController extends Notifier<SignupState> {
-  static const String _apiPath = '/auth/signup';
-
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
@@ -45,30 +45,51 @@ class SignupController extends Notifier<SignupState> {
     state = state.copyWith(isSubmitting: true);
 
     try {
-      final ApiResult<dynamic> result = await ApiService.instance.post(
-        _apiPath,
-        data: <String, dynamic>{
-          'name': nameController.text.trim(),
-          'email': emailController.text.trim(),
-          'password': passwordController.text.trim(),
-        },
+      final UserCredential credential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
       );
 
-      if (!result.success) {
-        AppMessaging.showError(
-          context,
-          result.errorMessage ?? 'Signup failed. Please try again.',
-        );
-        return;
+      final User? firebaseUser = credential.user;
+      if (firebaseUser == null) {
+        throw 'Signup failed. User could not be created.';
       }
 
-      AppMessaging.showSuccess(
-        context,
-        'Signup details sent for verification.',
+      // Update display name
+      await firebaseUser.updateDisplayName(nameController.text.trim());
+
+      // Create user profile in Firestore
+      final UserModel newUser = UserModel(
+        id: firebaseUser.uid,
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        createdAt: DateTime.now(),
       );
-      Navigator.of(
-        context,
-      ).pushNamed(AppRoutes.otp, arguments: emailController.text.trim());
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(firebaseUser.uid)
+          .set(newUser.toJson());
+
+      // Set global user state
+      ref.read(userProvider.notifier).setUser(newUser);
+
+      if (context.mounted) {
+        AppMessaging.showSuccess(context, 'Account created successfully!');
+
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil(AppRoutes.home, (Route<dynamic> route) => false);
+      }
+    } on FirebaseAuthException catch (e) {
+      if (context.mounted) {
+        AppMessaging.showError(context, e.message ?? 'Signup failed.');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        AppMessaging.showError(context, 'An unexpected error occurred: $e');
+      }
     } finally {
       state = state.copyWith(isSubmitting: false);
     }

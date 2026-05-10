@@ -1,3 +1,5 @@
+import 'package:geolinked/feature/ask/ask_controller.dart';
+import 'package:geolinked/feature/broadcast/broadcast_controller.dart';
 import 'package:geolinked/feature/map/map_state.dart';
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:latlong2/latlong.dart';
@@ -14,6 +16,23 @@ class HomeMapController extends Notifier<HomeMapState> {
 
   @override
   HomeMapState build() {
+    // Listen to changes in Asks and Broadcasts to update map markers
+    ref.listen(askControllerProvider, (previous, next) {
+      final List<LatLng> points = next.nearbyAsks
+          .where((a) => a.latitude != null && a.longitude != null)
+          .map((a) => LatLng(a.latitude!, a.longitude!))
+          .toList();
+      state = state.copyWith(points: points);
+    });
+
+    ref.listen(broadcastControllerProvider, (previous, next) {
+      final List<LatLng> broadcastPoints = next.nearbyBroadcasts
+          .where((b) => b.latitude != null && b.longitude != null)
+          .map((b) => LatLng(b.latitude!, b.longitude!))
+          .toList();
+      state = state.copyWith(broadcasts: broadcastPoints);
+    });
+
     return const HomeMapState(
       targetLocation: _defaultTargetLocation,
       currentLocation: null,
@@ -95,22 +114,10 @@ class HomeMapController extends Notifier<HomeMapState> {
     state = state.copyWith(clearCameraTarget: true, clearCameraZoom: true);
   }
 
-  void setTargetLocation(LatLng value) {
-    state = state.copyWith(targetLocation: value);
-  }
-
   void setCurrentLocation(LatLng? value) {
     state = value == null
         ? state.copyWith(clearCurrentLocation: true)
         : state.copyWith(currentLocation: value);
-  }
-
-  void setBroadcasts(List<LatLng> value) {
-    state = state.copyWith(broadcasts: List<LatLng>.unmodifiable(value));
-  }
-
-  void setPoints(List<LatLng> value) {
-    state = state.copyWith(points: List<LatLng>.unmodifiable(value));
   }
 }
 

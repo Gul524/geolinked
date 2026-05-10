@@ -25,10 +25,9 @@ class SplashController extends Notifier<SplashState> {
           OnboardingController.onboardingCompletedKey,
         ) ??
         false;
-    final String authToken =
-        LocalStorageService.instance.get<String>(AppConstants.authTokenKey) ??
-        '';
-    final bool isAuthenticated = authToken.trim().isNotEmpty;
+        
+    // Check Firebase auth state
+    final bool isAuthenticated = FirebaseAuth.instance.currentUser != null;
 
     if (!context.mounted) {
       return;
