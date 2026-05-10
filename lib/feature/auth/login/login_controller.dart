@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolinked/shared/widgets/app_messaging.dart';
 import 'package:geolinked/utils/app_exports.dart';
+import 'package:geolinked/services/notification_service.dart';
 
 class LoginState {
   const LoginState({required this.isSubmitting, required this.rememberMe});
@@ -45,6 +46,9 @@ class LoginController extends Notifier<LoginState> {
       );
 
       if (context.mounted) {
+        // Save FCM token to database
+        NotificationService.instance.saveTokenToDatabase();
+        
         AppMessaging.showSuccess(context, 'Welcome back!');
         Navigator.of(context).pushReplacementNamed(AppRoutes.home);
       }

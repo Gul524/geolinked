@@ -39,19 +39,16 @@ class AppNotificationController extends Notifier<NotificationState> {
     ref.listen(askControllerProvider, (previous, next) {
       if (next.nearbyAsks.isNotEmpty) {
         final latestAsk = next.nearbyAsks.first;
-        if (state.lastReceivedAskId != latestAsk.id &&
-            previous != null &&
-            previous.nearbyAsks.isNotEmpty) {
-          
+        final bool isNew = previous == null || 
+            (previous.nearbyAsks.isEmpty) ||
+            (latestAsk.id != previous.nearbyAsks.first.id);
+
+        if (isNew && state.lastReceivedAskId != latestAsk.id) {
           state = state.copyWith(
             hasUnreadAsks: true,
             lastReceivedAskId: latestAsk.id,
           );
-          
-          // Trigger in-app notification event
           _triggerNewAskEvent(latestAsk.title);
-        } else if (state.lastReceivedAskId == null) {
-          state = state.copyWith(lastReceivedAskId: latestAsk.id);
         }
       }
     });
@@ -60,18 +57,16 @@ class AppNotificationController extends Notifier<NotificationState> {
     ref.listen(broadcastControllerProvider, (previous, next) {
       if (next.nearbyBroadcasts.isNotEmpty) {
         final latestBroadcast = next.nearbyBroadcasts.first;
-        if (state.lastReceivedBroadcastId != latestBroadcast.id &&
-            previous != null &&
-            previous.nearbyBroadcasts.isNotEmpty) {
-          
+        final bool isNew = previous == null || 
+            (previous.nearbyBroadcasts.isEmpty) ||
+            (latestBroadcast.id != previous.nearbyBroadcasts.first.id);
+
+        if (isNew && state.lastReceivedBroadcastId != latestBroadcast.id) {
           state = state.copyWith(
             hasUnreadBroadcasts: true,
             lastReceivedBroadcastId: latestBroadcast.id,
           );
-          
           _triggerNewBroadcastEvent(latestBroadcast.category);
-        } else if (state.lastReceivedBroadcastId == null) {
-          state = state.copyWith(lastReceivedBroadcastId: latestBroadcast.id);
         }
       }
     });

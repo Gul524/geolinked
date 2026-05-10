@@ -57,6 +57,14 @@ class AskController extends Notifier<AskState> {
   String get subtitle => '${state.allAsks.length} queries active in your area';
 
   Future<void> _initListeners() async {
+    // Start timeout immediately
+    _loadingTimeout = Timer(const Duration(seconds: 30), () {
+      if (state.isLoading) {
+        debugPrint('Ask loading timed out');
+        state = state.copyWith(isLoading: false);
+      }
+    });
+
     final userId = FirebaseAuth.instance.currentUser?.uid;
 
     // Get real location for nearby queries
@@ -110,13 +118,6 @@ class AskController extends Notifier<AskState> {
       },
     );
 
-    // Timeout loading after 30 seconds
-    _loadingTimeout = Timer(const Duration(seconds: 30), () {
-      if (state.isLoading) {
-        debugPrint('Ask loading timed out');
-        state = state.copyWith(isLoading: false);
-      }
-    });
   }
 
   Future<void> createAsk({

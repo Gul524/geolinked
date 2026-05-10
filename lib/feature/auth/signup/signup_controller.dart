@@ -1,5 +1,6 @@
 import 'package:geolinked/model/models.dart';
 import 'package:geolinked/utils/app_exports.dart';
+import 'package:geolinked/services/notification_service.dart';
 
 class SignupState {
   const SignupState({required this.isSubmitting, required this.termsAccepted});
@@ -81,6 +82,9 @@ class SignupController extends Notifier<SignupState> {
 
       // Send Email Verification
       await firebaseUser.sendEmailVerification();
+      
+      // Save FCM token
+      NotificationService.instance.saveTokenToDatabase();
 
       if (context.mounted) {
         AppMessaging.showSuccess(

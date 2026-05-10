@@ -72,6 +72,10 @@ class AskDiscussionController extends Notifier<AskDiscussionState> {
     }
 
     state = state.copyWith(item: item, isResolved: item.status == AskStatus.resolved);
+    
+    // Increment view count
+    FirestoreService.instance.incrementViewCount('ask', item.id);
+    
     _listenToComments(item.id);
   }
 
@@ -98,7 +102,7 @@ class AskDiscussionController extends Notifier<AskDiscussionState> {
 
   String get locationSubtitle {
     if (state.item == null) return '';
-    return 'Active · ${state.item!.replyCount} replies';
+    return 'Active · ${state.item!.replyCount} replies · ${state.item!.viewCount} views';
   }
 
   String get userQuestion => state.item?.title ?? '';

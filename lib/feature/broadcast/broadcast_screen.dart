@@ -42,7 +42,6 @@ class _BroadcastScreenState extends ConsumerState<BroadcastScreen> {
             children: [
               BroadcastHeaderWidget(
                 subtitle: 'Finding nearby broadcasts...',
-                onCreatePressed: () {},
               ),
               Expanded(child: ShimmerLoadingWidget.list(itemHeight: 110)),
             ],
@@ -99,24 +98,8 @@ class _BroadcastScreenState extends ConsumerState<BroadcastScreen> {
         message: isNearby
             ? 'Stay informed about what is happening around you. Start by sharing an update!'
             : 'You haven\'t shared any alerts yet. Keep your community safe by sharing updates!',
-        actionLabel: isNearby ? null : 'Broadcast Now',
-        onAction: isNearby
-            ? null
-            : () async {
-                final result = await BroadcastSheet.showSheet(context);
-                if (result != null) {
-                  ref
-                      .read(broadcastControllerProvider.notifier)
-                      .createBroadcast(
-                        category: result.category,
-                        message: result.question,
-                        lat: 24.8607,
-                        lng: 67.0011,
-                        radiusKm: result.radiusMeters / 1000,
-                        imageUrl: result.imageUrl,
-                      );
-                }
-              },
+        actionLabel: null,
+        onAction: null,
       );
     }
 

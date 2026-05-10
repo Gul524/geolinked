@@ -24,13 +24,14 @@ class HomeScreen extends ConsumerWidget {
 
     // Listen to notification events
     ref.listen(
-      notificationControllerProvider.notifier.select(
-        (c) => c.notificationEvents,
-      ),
+      notificationControllerProvider,
       (prev, next) {
-        next.listen((message) {
-          AppMessaging.showInfo(context, message);
-        });
+        if (next.hasUnreadAsks && (prev == null || !prev.hasUnreadAsks)) {
+          AppMessaging.showInfo(context, 'Someone asked a new question nearby!');
+        }
+        if (next.hasUnreadBroadcasts && (prev == null || !prev.hasUnreadBroadcasts)) {
+          AppMessaging.showWarning(context, 'New community alert in your area!');
+        }
       },
     );
 
@@ -111,8 +112,8 @@ class _FABColumn extends StatelessWidget {
             onPressed: onAskPressed,
             label: 'Ask',
             subtitle: '${profileState.askRadiusMeters.toStringAsFixed(0)}m',
-            icon: AppIcons.ask,
-            color: Colors.red,
+            icon: Icons.help_center_rounded,
+            color: Colors.orange,
           ),
           const SizedBox(height: 12),
           _FABButton(

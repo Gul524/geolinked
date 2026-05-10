@@ -136,4 +136,12 @@ final GeoFirePoint center = GeoFirePoint(GeoPoint(latitude, longitude));
               .toList(),
         );
   }
+
+  Future<void> incrementViewCount(String type, String postId) async {
+    final collection = type == 'ask' ? asks : broadcasts;
+    final field = type == 'ask' ? 'viewCount' : 'seenCount';
+    await collection.doc(postId).update({
+      field: FieldValue.increment(1),
+    });
+  }
 }

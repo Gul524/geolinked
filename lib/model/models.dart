@@ -55,6 +55,7 @@ class AskModel {
     this.status = AskStatus.active,
     this.replyCount = 0,
     this.upvotes = 0,
+    this.viewCount = 0,
     this.latitude,
     this.longitude,
     this.imageUrl,
@@ -69,6 +70,7 @@ class AskModel {
   final AskStatus status;
   final int replyCount;
   final int upvotes;
+  final int viewCount;
   final double? latitude;
   final double? longitude;
   final String? imageUrl;
@@ -88,6 +90,7 @@ class AskModel {
     AskStatus? status,
     int? replyCount,
     int? upvotes,
+    int? viewCount,
     double? latitude,
     double? longitude,
     String? imageUrl,
@@ -102,6 +105,7 @@ class AskModel {
       status: status ?? this.status,
       replyCount: replyCount ?? this.replyCount,
       upvotes: upvotes ?? this.upvotes,
+      viewCount: viewCount ?? this.viewCount,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       imageUrl: imageUrl ?? this.imageUrl,

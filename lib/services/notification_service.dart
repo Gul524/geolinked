@@ -2,6 +2,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:geolinked/utils/app_navigator.dart';
+import 'package:geolinked/model/models.dart';
+import 'package:geolinked/feature/ask/ask_discussion_screen.dart';
+import 'package:geolinked/feature/broadcast/broadcast_discussion_screen.dart';
+import 'package:flutter/material.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -35,6 +42,24 @@ class NotificationService {
     await _initLocalNotifications();
     await _setupForegroundNotifications();
     await _setupFcmListeners();
+    await _handleInitialMessage();
+  }
+
+  Future<void> saveTokenToDatabase() async {
+    try {
+      final String? token = await _messaging.getToken();
+      final String? userId = FirebaseAuth.instance.currentUser?.uid;
+
+      if (token != null && userId != null) {
+        await FirebaseFirestore.instance.collection('users').doc(userId).set({
+          'fcmToken': token,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+        debugPrint('FCM Token saved for user: $userId');
+      }
+    } catch (e) {
+      debugPrint('Error saving FCM token: $e');
+    }
   }
 
   Future<String?> getFcmToken() async {
@@ -125,8 +150,53 @@ class NotificationService {
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      // Route handling for notification tap can be added here.
+      _handleNotificationClick(message);
     });
+  }
+
+  Future<void> _handleInitialMessage() async {
+    final RemoteMessage? initialMessage = await _messaging.getInitialMessage();
+    if (initialMessage != null) {
+      _handleNotificationClick(initialMessage);
+    }
+  }
+
+  void _handleNotificationClick(RemoteMessage message) {
+    final data = message.data;
+    final String? type = data['type']; // 'ask' or 'broadcast'
+    final String? id = data['id'];
+
+    if (id == null || type == null || navigatorKey.currentState == null) {
+      return;
+    }
+
+    if (type == 'ask') {
+      // In a real app, you'd fetch the full model from Firestore first
+      // For now, we'll navigate with a partial model or wait for fetch
+      _navigateToAsk(id);
+    } else if (type == 'broadcast') {
+      _navigateToBroadcast(id);
+    }
+  }
+
+  Future<void> _navigateToAsk(String id) async {
+    final doc = await FirebaseFirestore.instance.collection('asks').doc(id).get();
+    if (doc.exists) {
+      final model = AskModel.fromJson(doc.data()!);
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(builder: (_) => AskDiscussionScreen(item: model)),
+      );
+    }
+  }
+
+  Future<void> _navigateToBroadcast(String id) async {
+    final doc = await FirebaseFirestore.instance.collection('broadcasts').doc(id).get();
+    if (doc.exists) {
+      final model = BroadcastModel.fromJson(doc.data()!);
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(builder: (_) => BroadcastDiscussionScreen(item: model)),
+      );
+    }
   }
 
   Future<void> subscribeToTopic(String topic) async {

@@ -56,25 +56,6 @@ class _AskScreenState extends ConsumerState<AskScreen> {
             children: <Widget>[
               AskHistoryHeaderWidget(
                 subtitle: controller.subtitle,
-                onCreatePressed: () async {
-                  final result = await AskSheet.showSheet(context);
-                  if (!context.mounted || result == null) {
-                    return;
-                  }
-
-                  await controller.createAsk(
-                    title: result.subject,
-                    description: result.question,
-                    lat: 24.8607,
-                    lng: 67.0011,
-                    imageUrl: result.imageUrl,
-                  );
-
-                  AppMessaging.showSuccess(
-                    context,
-                    'Query submitted successfully.',
-                  );
-                },
               ),
               TabBar(
                 indicatorColor: Theme.of(context).colorScheme.primary,
@@ -112,21 +93,8 @@ class _AskScreenState extends ConsumerState<AskScreen> {
         message: isNearby
             ? 'Nobody around you has asked anything yet. Be the first!'
             : 'You haven\'t asked any questions yet. Tap the button to start!',
-        actionLabel: isNearby ? null : 'Ask Now',
-        onAction: isNearby
-            ? null
-            : () async {
-                final result = await AskSheet.showSheet(context);
-                if (result != null) {
-                  ref.read(askControllerProvider.notifier).createAsk(
-                        title: result.subject,
-                        description: result.question,
-                        lat: 24.8607,
-                        lng: 67.0011,
-                        imageUrl: result.imageUrl,
-                      );
-                }
-              },
+        actionLabel: null,
+        onAction: null,
       );
     }
 

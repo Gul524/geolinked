@@ -54,7 +54,19 @@ class GeoService {
 
     if (permission == LocationPermission.deniedForever) return null;
 
-    return await Geolocator.getCurrentPosition();
+    try {
+      // Try to get current position with a timeout
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+          timeLimit: Duration(seconds: 5),
+        ),
+      ).timeout(const Duration(seconds: 6));
+    } catch (e) {
+      debugPrint('Error getting current location: $e. Falling back to last known.');
+      // Fallback to last known position
+      return await Geolocator.getLastKnownPosition();
+    }
   }
 
   /// Starts listening to location changes and updates Firestore.

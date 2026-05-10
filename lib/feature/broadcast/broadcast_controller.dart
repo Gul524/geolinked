@@ -55,6 +55,14 @@ class BroadcastController extends Notifier<BroadcastState> {
   String get subtitle => '${state.allBroadcasts.length} alerts active in your area';
 
   Future<void> _initListeners() async {
+    // Start timeout immediately
+    _loadingTimeout = Timer(const Duration(seconds: 30), () {
+      if (state.isLoading) {
+        debugPrint('Broadcast loading timed out');
+        state = state.copyWith(isLoading: false);
+      }
+    });
+
     final userId = FirebaseAuth.instance.currentUser?.uid;
 
     // Get real location for nearby queries
@@ -88,7 +96,6 @@ class BroadcastController extends Notifier<BroadcastState> {
       );
     }
 
-    // Nearby Broadcasts listener
     _nearbySubscription = FirestoreService.instance
         .getNearbyBroadcasts(
       latitude: lat,
@@ -98,7 +105,8 @@ class BroadcastController extends Notifier<BroadcastState> {
         .listen(
       (items) {
         _loadingTimeout?.cancel();
-        state = state.copyWith(nearbyBroadcasts: items, isLoading: false);
+        final filtered = items.where((item) => item.authorId != userId).toList();
+        state = state.copyWith(nearbyBroadcasts: filtered, isLoading: false);
       },
       onError: (error) {
         _loadingTimeout?.cancel();
@@ -107,13 +115,6 @@ class BroadcastController extends Notifier<BroadcastState> {
       },
     );
 
-    // Timeout loading after 30 seconds
-    _loadingTimeout = Timer(const Duration(seconds: 30), () {
-      if (state.isLoading) {
-        debugPrint('Broadcast loading timed out');
-        state = state.copyWith(isLoading: false);
-      }
-    });
   }
 
   Future<void> createBroadcast({

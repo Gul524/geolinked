@@ -67,6 +67,10 @@ class BroadcastDiscussionController extends Notifier<BroadcastDiscussionState> {
     }
 
     state = state.copyWith(item: item);
+    
+    // Increment view count
+    FirestoreService.instance.incrementViewCount('broadcast', item.id);
+    
     _listenToComments(item.id);
   }
 
