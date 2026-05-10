@@ -7,7 +7,7 @@ GeoLinked is a location-based community messaging app that allows users to ask q
 Main features:
 - **Asks**: Location-targeted queries (e.g., "Is the shop open?").
 - **Broadcasts**: News/alerts (e.g., "Traffic jam ahead") shared in a radius.
-- **Interactive Map**: Live view of community activity with reactive markers.
+- **Interactive Map**: Live view of community activity using Open Street Map (OSM).
 - **Radius Notifications**: Intelligent push notifications for nearby events.
 
 ## 2. Tech Stack
@@ -19,14 +19,17 @@ Main features:
   - **Storage**: (Pending) Firebase Storage
   - **Messaging**: Firebase Cloud Messaging (FCM)
 - **Geolocation**:
-  - `geolocator`: Live tracking.
+  - `geolocator`: Live tracking and permission management.
+  - `flutter_map`: Open Street Map (OSM) integration (No API Key Required).
   - `geoflutterfire_plus`: Geohash-based radius queries.
+- **Package Name**: `com.sulemangul.geolinked` (Updated for Release)
+- **Firebase Status**: ✅ **Connected**
 - **Local Cache**: Hive (Auth tokens, User ID, Profile data)
 
 ## 3. Core App Flow
-1. **Startup**: Splash screen checks for Firebase session.
+1. **Startup**: Splash screen checks for Firebase session and loads the **cached user profile** for instant offline access.
 2. **Auth**: Login/Signup creates/fetches profile from Firestore `users` collection.
-3. **Map**: Main screen displays markers for nearby `asks` and `broadcasts`.
+3. **Map**: Main screen displays markers for nearby `asks` and `broadcasts` (Cached for offline viewing).
 4. **Action**: Users tap the Map to select a target location for new posts.
 5. **Real-time**: Posts appear instantly for nearby users via Firestore streams and Geohash topic notifications.
 
@@ -55,7 +58,6 @@ Main features:
 - `lib/shared`: Reusable design-system components.
 
 ## 8. Next Steps
-1. **Discussion UI**: Implement the chat-style screen for Asks/Broadcasts.
-2. **Media**: Integration of image uploads for broadcasts.
-3. **Background Tracking**: Implementation of `workmanager` for background location updates.
-4. **Map Clustering**: Enhancing Map performance for high-density areas.
+1. **Media**: Integration of image uploads for broadcasts.
+2. **Background Tracking**: Implementation of `workmanager` for background location updates.
+3. **Map Clustering**: Enhancing Map performance for high-density areas.

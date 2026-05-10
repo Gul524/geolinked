@@ -1,18 +1,22 @@
-import 'package:geolinked/configs/constants.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+/// Service to handle local key-value persistence using Hive.
 class LocalStorageService {
   LocalStorageService._internal();
-
   static final LocalStorageService instance = LocalStorageService._internal();
 
-  static const String _defaultBoxName = 'geolinked_box';
-
+  static const String boxName = 'geolinked_prefs';
   Box<dynamic>? _defaultBox;
 
-  Future<void> init({String boxName = _defaultBoxName}) async {
+  Future<void> init() async {
     await Hive.initFlutter();
     _defaultBox = await Hive.openBox<dynamic>(boxName);
+  }
+
+  Future<void> _ensureReady() async {
+    if (_defaultBox == null || !_defaultBox!.isOpen) {
+      _defaultBox = await Hive.openBox<dynamic>(boxName);
+    }
   }
 
   Future<void> put(String key, dynamic value) async {
@@ -20,26 +24,8 @@ class LocalStorageService {
     await _defaultBox!.put(key, value);
   }
 
-  Future<void> saveAuthToken(String token, {required bool rememberMe}) async {
-    if (rememberMe) {
-      await put(AppConstants.authTokenKey, token);
-      return;
-    }
-    await delete(AppConstants.authTokenKey);
-  }
-
-  Future<void> saveUserId(String userId) async {
-    await put('current_user_id', userId);
-  }
-
-  String? getUserId() {
-    return get<String>('current_user_id');
-  }
-
   T? get<T>(String key) {
-    if (_defaultBox == null) {
-      return null;
-    }
+    if (_defaultBox == null) return null;
     final dynamic value = _defaultBox!.get(key);
     return value is T ? value : null;
   }
@@ -52,19 +38,5 @@ class LocalStorageService {
   Future<void> clear() async {
     await _ensureReady();
     await _defaultBox!.clear();
-  }
-
-  bool containsKey(String key) {
-    if (_defaultBox == null) {
-      return false;
-    }
-    return _defaultBox!.containsKey(key);
-  }
-
-  Future<void> _ensureReady() async {
-    if (_defaultBox != null) {
-      return;
-    }
-    await init();
   }
 }

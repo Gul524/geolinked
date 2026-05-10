@@ -1,13 +1,23 @@
+import 'package:geolinked/feature/auth/signup/terms_conditions_screen.dart';
 import 'package:geolinked/utils/app_exports.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:geolinked/firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   await LocalStorageService.instance.init();
-  ApiService.instance.setBaseUrl(AppConstants.apiBaseUrl);
   ApiService.instance.setAuthToken(
     LocalStorageService.instance.get<String>(AppConstants.authTokenKey),
   );
-  // await NotificationService.instance.initialize();
+  
+  // Initialize Notifications
+  await NotificationService.instance.initialize();
 
   runApp(const ProviderScope(child: MainApp()));
 }
@@ -21,6 +31,7 @@ class MainApp extends ConsumerWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      title: 'GeoLinked',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
@@ -32,6 +43,7 @@ class MainApp extends ConsumerWidget {
         AppRoutes.signup: (_) => const SignupScreen(),
         AppRoutes.otp: (_) => const OtpVerificationScreen(),
         AppRoutes.home: (_) => const HomeScreen(),
+        AppRoutes.terms: (_) => const TermsConditionsScreen(),
       },
     );
   }

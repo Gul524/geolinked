@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "22233042036",
+    "project_id": "services-e0a2c",
+    "storage_bucket": "services-e0a2c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:22233042036:android:ec14a63726387feb661521",
+        "android_client_info": {
+          "package_name": "com.sulemangul.geolinked"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCDT2JPY1bC0z11jGbd5b_pkNEhwInYoW4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,48 +1,52 @@
+import 'dart:convert';
 import 'package:geolinked/model/models.dart';
 import 'package:geolinked/utils/app_exports.dart';
 
 /// Global provider to manage the current user's state and session via Firebase.
+/// Implements offline-first caching for a seamless persistent login experience.
 final userProvider = NotifierProvider<UserNotifier, UserModel?>(() {
   return UserNotifier();
 });
 
 class UserNotifier extends Notifier<UserModel?> {
+  static const String _userCacheKey = 'cached_user_profile';
+
   @override
   UserModel? build() {
-    // Listen to Auth state changes to keep the user session in sync
+    // 1. Try to load from local cache first for instant UI response
+    _loadFromCache();
+    
+    // 2. Initialize real-time auth listener
     _initAuthListener();
+    
     return null;
+  }
+
+  void _loadFromCache() {
+    final String? jsonStr = LocalStorageService.instance.get<String>(_userCacheKey);
+    if (jsonStr != null) {
+      try {
+        state = UserModel.fromJson(jsonDecode(jsonStr) as Map<String, dynamic>);
+      } catch (e) {
+        debugPrint('Error loading user cache: $e');
+      }
+    }
   }
 
   void _initAuthListener() {
     FirebaseAuth.instance.authStateChanges().listen((User? firebaseUser) async {
       if (firebaseUser == null) {
         state = null;
+        await LocalStorageService.instance.delete(_userCacheKey);
       } else {
         await fetchProfile();
       }
     });
   }
 
-  /// Sets the current user and persists the ID locally for faster lookups.
-  void setUser(UserModel user) {
-    state = user;
-    LocalStorageService.instance.saveUserId(user.id);
-  }
-
-  /// Clears the user session (Logout).
-  Future<void> logout() async {
-    await FirebaseAuth.instance.signOut();
-    state = null;
-    LocalStorageService.instance.delete('current_user_id');
-  }
-
-  /// Fetches the latest profile data from Firestore.
+  /// Fetches fresh profile data and updates the local cache.
   Future<void> fetchProfile() async {
-    final String? userId =
-        FirebaseAuth.instance.currentUser?.uid ??
-        LocalStorageService.instance.getUserId();
-        
+    final String? userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
 
     try {
@@ -52,18 +56,27 @@ class UserNotifier extends Notifier<UserModel?> {
           .get();
 
       if (doc.exists && doc.data() != null) {
-        final UserModel user =
-            UserModel.fromJson(doc.data() as Map<String, dynamic>);
+        final Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        final UserModel user = UserModel.fromJson(data);
+        
+        // Update state and cache
         state = user;
+        await LocalStorageService.instance.put(_userCacheKey, jsonEncode(data));
       }
     } catch (e) {
       debugPrint('Error fetching profile: $e');
     }
   }
 
-  /// Updates the user's current coordinates in Firestore.
+  /// Explicit Logout: Clears Firebase session and local cache.
+  Future<void> logout() async {
+    await FirebaseAuth.instance.signOut();
+    await LocalStorageService.instance.delete(_userCacheKey);
+    state = null;
+  }
+
   Future<bool> updateLocation(double latitude, double longitude) async {
-    final String? userId = state?.id ?? FirebaseAuth.instance.currentUser?.uid;
+    final String? userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return false;
 
     try {
@@ -73,24 +86,6 @@ class UserNotifier extends Notifier<UserModel?> {
       });
       return true;
     } catch (e) {
-      debugPrint('Error updating location: $e');
-      return false;
-    }
-  }
-
-  /// Sets or clears the Firebase messaging token in Firestore.
-  Future<bool> updateNotificationId(String? firebaseNotificationId) async {
-    final String? userId = state?.id ?? FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null) return false;
-
-    try {
-      await FirebaseFirestore.instance.collection('users').doc(userId).update({
-        'fcmToken': firebaseNotificationId,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      return true;
-    } catch (e) {
-      debugPrint('Error updating notification ID: $e');
       return false;
     }
   }

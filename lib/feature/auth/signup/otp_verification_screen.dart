@@ -17,49 +17,55 @@ class OtpVerificationScreen extends ConsumerWidget {
     );
 
     final Object? args = ModalRoute.of(context)?.settings.arguments;
-    final String email = args is String && args.isNotEmpty
-        ? args
-        : 'your email';
+    final String email = args is String && args.isNotEmpty ? args : 'your email';
 
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(18, 22, 18, 16),
+          padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              AuthHeaderWidget(
-                title: 'Verify OTP',
-                subtitle: 'Enter the 6-digit code sent to $email.',
-              ),
-              const SizedBox(height: 26),
-              Form(
-                key: controller.formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    AppTextField(
-                      label: 'OTP Code',
-                      hintText: '000000',
-                      controller: controller.otpController,
-                      keyboardType: TextInputType.number,
-                      textInputAction: TextInputAction.done,
-                      validator: controller.validateOtp,
-                    ),
-                    const SizedBox(height: 20),
-                    CustomButtonWidget(
-                      label: state.isSubmitting
-                          ? 'Verifying...'
-                          : 'Verify & Create Account',
-                      onPressed: state.isSubmitting
-                          ? null
-                          : () => controller.onVerifyPressed(
-                              context,
-                              email: email,
-                            ),
-                    ),
-                  ],
+              const Center(
+                child: Icon(
+                  Icons.mark_email_unread_outlined,
+                  size: 80,
+                  color: Colors.blue,
                 ),
+              ),
+              const SizedBox(height: 24),
+              AuthHeaderWidget(
+                title: 'Verify your email',
+                subtitle:
+                    'We\'ve sent a verification link to $email. Please click the link to continue.',
+              ),
+              const SizedBox(height: 40),
+              CustomButtonWidget(
+                label: state.isSubmitting ? 'Checking...' : 'Check Verification Status',
+                onPressed: state.isSubmitting
+                    ? null
+                    : () => controller.onCheckStatusPressed(context),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: state.isResending
+                    ? null
+                    : () => controller.onResendPressed(context),
+                child: Text(
+                  state.isResending ? 'Resending...' : 'Resend Verification Email',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40),
+              Text(
+                'Once you have verified your email, click the button above to start using GeoLinked.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey[600],
+                    ),
               ),
             ],
           ),

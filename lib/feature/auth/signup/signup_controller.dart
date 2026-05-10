@@ -1,14 +1,17 @@
-import 'package:geolinked/configs/providers/user_provider.dart';
 import 'package:geolinked/model/models.dart';
 import 'package:geolinked/utils/app_exports.dart';
 
 class SignupState {
-  const SignupState({required this.isSubmitting});
+  const SignupState({required this.isSubmitting, required this.termsAccepted});
 
   final bool isSubmitting;
+  final bool termsAccepted;
 
-  SignupState copyWith({bool? isSubmitting}) {
-    return SignupState(isSubmitting: isSubmitting ?? this.isSubmitting);
+  SignupState copyWith({bool? isSubmitting, bool? termsAccepted}) {
+    return SignupState(
+      isSubmitting: isSubmitting ?? this.isSubmitting,
+      termsAccepted: termsAccepted ?? this.termsAccepted,
+    );
   }
 }
 
@@ -29,37 +32,38 @@ class SignupController extends Notifier<SignupState> {
       confirmPasswordController.dispose();
     });
 
-    return const SignupState(isSubmitting: false);
+    return const SignupState(isSubmitting: false, termsAccepted: false);
+  }
+
+  void toggleTerms(bool? value) {
+    state = state.copyWith(termsAccepted: value ?? false);
   }
 
   Future<void> onSignupPressed(BuildContext context) async {
-    if (state.isSubmitting) {
+    if (state.isSubmitting) return;
+
+    if (!state.termsAccepted) {
+      AppMessaging.showWarning(context, 'You must agree to the Terms & Conditions.');
       return;
     }
 
-    if (!formKey.currentState!.validate()) {
-      AppMessaging.showWarning(context, 'Please complete all required fields.');
-      return;
-    }
+    if (!formKey.currentState!.validate()) return;
 
     state = state.copyWith(isSubmitting: true);
 
     try {
-      final UserCredential credential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
+      final UserCredential credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: passwordController.text.trim(),
+          );
 
       final User? firebaseUser = credential.user;
-      if (firebaseUser == null) {
-        throw 'Signup failed. User could not be created.';
-      }
+      if (firebaseUser == null) throw 'Signup failed.';
 
-      // Update display name
       await firebaseUser.updateDisplayName(nameController.text.trim());
 
-      // Create user profile in Firestore
+      // Create profile in Firestore
       final UserModel newUser = UserModel(
         id: firebaseUser.uid,
         name: nameController.text.trim(),
@@ -72,15 +76,18 @@ class SignupController extends Notifier<SignupState> {
           .doc(firebaseUser.uid)
           .set(newUser.toJson());
 
-      // Set global user state
-      ref.read(userProvider.notifier).setUser(newUser);
+      // Send Email Verification
+      await firebaseUser.sendEmailVerification();
 
       if (context.mounted) {
-        AppMessaging.showSuccess(context, 'Account created successfully!');
-
-        Navigator.of(
+        AppMessaging.showSuccess(
           context,
-        ).pushNamedAndRemoveUntil(AppRoutes.home, (Route<dynamic> route) => false);
+          'Account created! Please check your email to verify.',
+        );
+        Navigator.of(context).pushNamed(
+          AppRoutes.otp,
+          arguments: emailController.text.trim(),
+        );
       }
     } on FirebaseAuthException catch (e) {
       if (context.mounted) {
@@ -88,7 +95,7 @@ class SignupController extends Notifier<SignupState> {
       }
     } catch (e) {
       if (context.mounted) {
-        AppMessaging.showError(context, 'An unexpected error occurred: $e');
+        AppMessaging.showError(context, 'An error occurred: $e');
       }
     } finally {
       state = state.copyWith(isSubmitting: false);
@@ -96,57 +103,24 @@ class SignupController extends Notifier<SignupState> {
   }
 
   String? validateName(String? value) {
-    final String input = (value ?? '').trim();
-    if (input.isEmpty) {
-      return 'Name is required';
-    }
-
-    if (input.length < 2) {
-      return 'Name is too short';
-    }
-
+    if ((value ?? '').trim().length < 2) return 'Name is too short';
     return null;
   }
 
   String? validateEmail(String? value) {
-    final String input = (value ?? '').trim();
-    if (input.isEmpty) {
-      return 'Email is required';
-    }
-
-    final RegExp emailRegex = RegExp(
-      r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$',
-    );
-    if (!emailRegex.hasMatch(input)) {
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value ?? '')) {
       return 'Enter a valid email';
     }
-
     return null;
   }
 
   String? validatePassword(String? value) {
-    final String input = (value ?? '').trim();
-    if (input.isEmpty) {
-      return 'Password is required';
-    }
-
-    if (input.length < 6) {
-      return 'Password must be at least 6 characters';
-    }
-
+    if ((value ?? '').length < 6) return 'Password must be 6+ chars';
     return null;
   }
 
   String? validateConfirmPassword(String? value) {
-    final String input = (value ?? '').trim();
-    if (input.isEmpty) {
-      return 'Confirm your password';
-    }
-
-    if (input != passwordController.text.trim()) {
-      return 'Passwords do not match';
-    }
-
+    if (value != passwordController.text) return 'Passwords do not match';
     return null;
   }
 }
