@@ -4,9 +4,12 @@ GeoLinked is a location-aware community engagement platform. It allows users to 
 
 ## 🚀 Key Features
 - **Radius-Based Queries**: Ask "Is the market open?" and only people in that radius get notified.
+- **Background Location Sync**: Stay updated and receive alerts even when the app is closed.
+- **Media Integration**: Attach photos to your posts to provide visual context for community updates.
 
 ## 🛠️ Tech Stack
 - **Frontend**: Flutter (Riverpod State Management)
+- **Background**: Workmanager (Periodic background sync)
 - **Backend**: Firebase (Auth, Firestore, Cloud Messaging)
 - **Maps**: Google Maps & OpenStreetMap integration.
 - **Location**: High-precision geolocator with geohash-based radius searching.

@@ -8,6 +8,7 @@ import 'package:geolinked/feature/auth/signup/signup_screen.dart';
 import 'package:geolinked/feature/auth/signup/otp_verification_screen.dart';
 import 'package:geolinked/feature/auth/signup/terms_conditions_screen.dart';
 import 'package:geolinked/feature/home/home_screen.dart';
+import 'package:geolinked/services/background_service.dart';
 
 
 Future<void> main() async {
@@ -25,6 +26,9 @@ Future<void> main() async {
   
   // Initialize Notifications
   await NotificationService.instance.initialize();
+
+  // Initialize Background Service
+  await BackgroundService.initialize();
 
   runApp(const ProviderScope(child: MainApp()));
 }

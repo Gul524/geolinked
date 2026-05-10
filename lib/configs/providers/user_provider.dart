@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolinked/model/models.dart';
 import 'package:geolinked/utils/app_exports.dart';
+import 'package:geolinked/services/background_service.dart';
 
 /// Global provider to manage the current user's state and session via Firebase.
 /// Implements offline-first caching for a seamless persistent login experience.
@@ -40,8 +41,11 @@ class UserNotifier extends Notifier<UserModel?> {
       if (firebaseUser == null) {
         state = null;
         await LocalStorageService.instance.delete(_userCacheKey);
+        await BackgroundService.stopLocationSync();
       } else {
         await fetchProfile();
+        // Start background location sync
+        await BackgroundService.startLocationSync();
       }
     });
   }
@@ -72,6 +76,7 @@ class UserNotifier extends Notifier<UserModel?> {
 
   /// Explicit Logout: Clears Firebase session and local cache.
   Future<void> logout() async {
+    await BackgroundService.stopLocationSync();
     await FirebaseAuth.instance.signOut();
     await LocalStorageService.instance.delete(_userCacheKey);
     state = null;

@@ -11,6 +11,7 @@ Main features:
 - **Place Search**: Global search for locations using the OSM Nominatim API.
 - **Current Location Focus**: Quick-access button to center the map on the user's live position.
 - **Media Support**: Users can attach photos to Asks and Broadcasts for better visual reporting.
+- **Background Sync**: Real-time location tracking even when the app is closed.
 - **Radius Notifications**: Intelligent push notifications for nearby events.
 
 ## 2. Tech Stack
@@ -21,6 +22,7 @@ Main features:
   - **Database**: Cloud Firestore (Real-time data)
   - **Storage**: ✅ **Firebase Storage** (Media uploads)
   - **Messaging**: Firebase Cloud Messaging (FCM)
+- **Background**: `workmanager` (Periodic background sync)
 - **Geolocation**:
   - `geolocator`: Live tracking and permission management.
   - `flutter_map`: Open Street Map (OSM) integration (No API Key Required).
@@ -41,6 +43,7 @@ Main features:
 - **NotificationService**: Manages FCM tokens, local notifications, and geohash-based topic subscriptions.
 - **GeoService**: Tracks live user location, manages the `geo_{geohash}` topic fallback, and provides OSM-based place search via Nominatim.
 - **StorageService**: Manages media uploads to Firebase Storage with organized folder structures.
+- **BackgroundService**: Manages periodic background location synchronization using Workmanager.
 - **LocalStorageService**: Manages Hive-based persistence for faster offline startup.
 
 ## 5. Firebase Schema
@@ -51,6 +54,7 @@ Main features:
 
 ## 6. Implementation Notes
 - **Real-time Discussion**: Asks and Broadcasts both feature live discussion threads. These are implemented using Firestore sub-collections (`comments`). The `AskDiscussionController` and `BroadcastDiscussionController` subscribe to these sub-collections to provide a chat-like experience.
+- **Background Location Sync**: Implemented using `workmanager`. The app triggers a periodic task (every 15 mins) to update the user's `lastLocation` in Firestore. This task initializes Firebase independently in a background isolate.
 - **Geohash Fallback**: Every user is subscribed to a topic named `geo_ABCDE` (where ABCDE is their 5-char geohash). This allows for instant area-wide broadcasts even without a backend query.
 - **Cloud Functions**: A Node.js trigger `onAskCreated` sends notifications to users within the exact radius defined in the post.
 
@@ -58,9 +62,9 @@ Main features:
 - `lib/configs`: App constants, theme, and providers.
 - `lib/feature`: UI and Controllers grouped by feature (Auth, Home, Map, Ask, Broadcast).
 - `lib/model`: Data models with JSON serialization.
-- `lib/services`: External integrations (Firebase, Geo, Storage).
+- `lib/services`: External integrations (Firebase, Geo, Storage, Background).
 - `lib/shared`: Reusable design-system components.
 
 ## 8. Next Steps
-1. **Background Tracking**: Implementation of `workmanager` for background location updates.
-2. **Map Clustering**: Enhancing Map performance for high-density areas.
+1. **Map Clustering**: Enhancing Map performance for high-density areas.
+2. **Advanced Filters**: Toggle markers by category or post type.

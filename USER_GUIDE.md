@@ -5,7 +5,8 @@ Welcome to GeoLinked! This guide explains how to use the core features of the ap
 ## 1. Getting Started
 - **Account Creation**: Use the Signup screen to create an account with your email and name.
 - **Login**: Your session is managed by Firebase. Once logged in, the app will remember you.
-- **Location Permissions**: For GeoLinked to work, you MUST allow location access. This allows you to see markers near you and receive relevant alerts.
+- **Location Permissions**: For GeoLinked to work, you MUST allow location access. To receive real-time alerts even when the app is closed, select **"Allow all the time"** when prompted. 
+- **Privacy**: Your background location is only used to send you relevant nearby alerts and is never shared with third-party advertisers.
 
 ## 2. Using the Community Map
 The Map is your main dashboard.
