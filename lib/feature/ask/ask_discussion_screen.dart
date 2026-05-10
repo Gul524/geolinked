@@ -48,7 +48,7 @@ class _AskDiscussionScreenState extends ConsumerState<AskDiscussionScreen> {
               child: ListView(
                 padding: const EdgeInsets.only(bottom: 8),
                 children: <Widget>[
-                  AskQuestionCardWidget(question: controller.userQuestion),
+                  AskQuestionCardWidget(item: widget.item),
                   ...state.messages.map(
                     (AskDiscussionMessage message) =>
                         AskMessageBubbleWidget(message: message),

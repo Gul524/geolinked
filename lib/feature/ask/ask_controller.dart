@@ -81,6 +81,7 @@ class AskController extends Notifier<AskState> {
     required String description,
     required double lat,
     required double lng,
+    String? imageUrl,
   }) async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
@@ -92,6 +93,7 @@ class AskController extends Notifier<AskState> {
       description: description,
       latitude: lat,
       longitude: lng,
+      imageUrl: imageUrl,
       createdAt: DateTime.now(),
     );
 

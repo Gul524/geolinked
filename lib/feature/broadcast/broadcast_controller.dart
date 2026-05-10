@@ -78,6 +78,7 @@ class BroadcastController extends Notifier<BroadcastState> {
     required double lng,
     double radiusKm = 10,
     BroadcastSeverity severity = BroadcastSeverity.info,
+    String? imageUrl,
   }) async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
@@ -91,6 +92,7 @@ class BroadcastController extends Notifier<BroadcastState> {
       longitude: lng,
       radiusKm: radiusKm,
       severity: severity,
+      imageUrl: imageUrl,
       createdAt: DateTime.now(),
     );
 

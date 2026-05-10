@@ -84,16 +84,32 @@ class BroadcastListItemWidget extends StatelessWidget {
                     ).textTheme.bodyMedium?.copyWith(height: 1.28),
                   ),
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: <Widget>[
-                      _MetaPill(label: '${item.seenCount} seen'),
-                      if (item.latitude != null)
-                        _MetaPill(
-                          label: 'Nearby',
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          children: <Widget>[
+                            _MetaPill(label: '👁️ ${item.seenCount}'),
+                            if (item.latitude != null)
+                              _MetaPill(label: '📍 Nearby'),
+                            _MetaPill(label: '✅ ${item.verifiedCount}'),
+                          ],
                         ),
-                      _MetaPill(label: '${item.verifiedCount} verified'),
+                      ),
+                      if (item.imageUrl != null)
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            image: DecorationImage(
+                              image: NetworkImage(item.imageUrl!),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ],

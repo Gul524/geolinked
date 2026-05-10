@@ -49,6 +49,7 @@ class AskModel {
     this.upvotes = 0,
     this.latitude,
     this.longitude,
+    this.imageUrl,
     this.createdAt,
     this.updatedAt,
   });
@@ -62,6 +63,7 @@ class AskModel {
   final int upvotes;
   final double? latitude;
   final double? longitude;
+  final String? imageUrl;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -87,6 +89,7 @@ class BroadcastModel {
     this.radiusKm = 10,
     this.verifiedCount = 0,
     this.seenCount = 0,
+    this.imageUrl,
     this.createdAt,
     this.expiresAt,
   });
@@ -101,6 +104,7 @@ class BroadcastModel {
   final double radiusKm;
   final int verifiedCount;
   final int seenCount;
+  final String? imageUrl;
   final DateTime? createdAt;
   final DateTime? expiresAt;
 

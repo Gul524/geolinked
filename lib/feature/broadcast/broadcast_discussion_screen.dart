@@ -50,32 +50,49 @@ class _BroadcastDiscussionScreenState
             if (state.item != null)
               Container(
                 margin: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: <Color>[primary, const Color(0xFF0B4AA9)],
                   ),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      state.item!.title,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      if (state.item!.imageUrl != null)
+                        Image.network(
+                          state.item!.imageUrl!,
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              state.item!.title,
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              state.item!.message,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Colors.white,
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      state.item!.message,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             Expanded(

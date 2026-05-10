@@ -1,4 +1,7 @@
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:geolinked/utils/app_exports.dart';
+import 'package:geolinked/services/storage_service.dart';
 
 class BroadcastSheetGeoPoint {
   const BroadcastSheetGeoPoint({
@@ -19,12 +22,14 @@ class BroadcastSheetResult {
     required this.category,
     required this.question,
     this.targetLocation,
+    this.imageUrl,
   });
 
   final int radiusMeters;
   final String category;
   final String question;
   final BroadcastSheetGeoPoint? targetLocation;
+  final String? imageUrl;
 }
 
 class BroadcastSheetState {
@@ -34,6 +39,8 @@ class BroadcastSheetState {
     this.selectedCategory,
     this.targetLocation,
     this.locationName,
+    this.image,
+    this.isUploading = false,
   });
 
   final int radiusMeters;
@@ -41,6 +48,8 @@ class BroadcastSheetState {
   final String? selectedCategory;
   final BroadcastSheetGeoPoint? targetLocation;
   final String? locationName;
+  final File? image;
+  final bool isUploading;
 
   BroadcastSheetState copyWith({
     int? radiusMeters,
@@ -51,6 +60,9 @@ class BroadcastSheetState {
     bool clearTargetLocation = false,
     String? locationName,
     bool clearLocationName = false,
+    File? image,
+    bool clearImage = false,
+    bool? isUploading,
   }) {
     return BroadcastSheetState(
       radiusMeters: radiusMeters ?? this.radiusMeters,
@@ -64,6 +76,8 @@ class BroadcastSheetState {
       locationName: clearLocationName
           ? null
           : (locationName ?? this.locationName),
+      image: clearImage ? null : (image ?? this.image),
+      isUploading: isUploading ?? this.isUploading,
     );
   }
 }
@@ -75,6 +89,7 @@ class BroadcastSheetController extends Notifier<BroadcastSheetState> {
 
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final TextEditingController questionController = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
 
   @override
   BroadcastSheetState build() {
@@ -103,6 +118,7 @@ class BroadcastSheetController extends Notifier<BroadcastSheetState> {
       clearSelectedCategory: true,
       targetLocation: initialTargetLocation,
       locationName: initialLocationName,
+      clearImage: true,
     );
   }
 
@@ -118,15 +134,24 @@ class BroadcastSheetController extends Notifier<BroadcastSheetState> {
     state = state.copyWith(selectedCategory: value);
   }
 
-  void setTargetLocation(BroadcastSheetGeoPoint targetLocation) {
-    state = state.copyWith(
-      targetLocation: targetLocation,
-      clearLocationName: true,
-    );
+  Future<void> pickImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+      if (pickedFile != null) {
+        state = state.copyWith(image: File(pickedFile.path));
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+    }
   }
 
-  void clearTargetLocation() {
-    state = state.copyWith(clearTargetLocation: true, clearLocationName: true);
+  void removeImage() {
+    state = state.copyWith(clearImage: true);
   }
 
   String? validateCategory(String? value) {
@@ -149,9 +174,17 @@ class BroadcastSheetController extends Notifier<BroadcastSheetState> {
     return null;
   }
 
-  BroadcastSheetResult? createResult() {
+  Future<BroadcastSheetResult?> createResult() async {
     if (!formKey.currentState!.validate()) {
       return null;
+    }
+
+    String? imageUrl;
+    if (state.image != null) {
+      state = state.copyWith(isUploading: true);
+      final storage = StorageService.instance;
+      imageUrl = await storage.uploadPostImage(state.image!, 'broadcasts');
+      state = state.copyWith(isUploading: false);
     }
 
     return BroadcastSheetResult(
@@ -159,6 +192,7 @@ class BroadcastSheetController extends Notifier<BroadcastSheetState> {
       category: state.selectedCategory!.trim(),
       question: questionController.text.trim(),
       targetLocation: state.targetLocation,
+      imageUrl: imageUrl,
     );
   }
 }

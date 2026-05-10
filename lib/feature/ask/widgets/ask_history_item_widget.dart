@@ -50,7 +50,7 @@ class AskHistoryItemWidget extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Just now', // Could use item.createdAt
+                        'Just now',
                         style: Theme.of(context).textTheme.labelMedium
                             ?.copyWith(
                               color: onSurface.withValues(alpha: 0.45),
@@ -69,16 +69,32 @@ class AskHistoryItemWidget extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: <Widget>[
-                      _Pill(label: '💬 ${item.replyCount} replies'),
-                      if (item.latitude != null)
-                        _Pill(
-                          label: '📍 Nearby',
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          children: <Widget>[
+                            _Pill(label: '💬 ${item.replyCount}'),
+                            if (item.latitude != null)
+                              _Pill(label: '📍 Nearby'),
+                            _Pill(label: resolved ? '✅ resolved' : '🟢 active'),
+                          ],
                         ),
-                      _Pill(label: resolved ? '✅ resolved' : '🟢 active'),
+                      ),
+                      if (item.imageUrl != null)
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            image: DecorationImage(
+                              image: NetworkImage(item.imageUrl!),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ],

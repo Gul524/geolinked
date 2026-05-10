@@ -20,7 +20,8 @@ The Map is your main dashboard.
 3. Confirm the location.
 4. Fill in the **Subject** and **Question**.
 5. Set the **Radius** (how far from that point people should be notified).
-6. Submit! People in that radius will receive a notification and can reply.
+6. **Add Image**: Tap the image button to attach a photo (Optional).
+7. Submit! People in that radius will receive a notification and can reply.
 
 ## 4. Sharing an Update (Broadcasts)
 1. Tap the **"Broadcast"** button.
@@ -29,7 +30,8 @@ The Map is your main dashboard.
 4. Write your message.
 5. Select the **Severity** (Info, Warning, Emergency).
 6. Set the **Broadcast Radius** (up to 30km).
-7. Submit! This will appear as an alert on maps for everyone in that range.
+7. **Attach Photo**: Add a photo to provide visual context (Optional).
+8. Submit! This will appear as an alert on maps for everyone in that range.
 
 ## 5. Engaging in Discussions
 - Tap on any marker on the map or an item in the **Asks** or **Broadcasts** lists.

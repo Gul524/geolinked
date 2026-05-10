@@ -10,6 +10,7 @@ Main features:
 - **Interactive Map**: Live view of community activity using Open Street Map (OSM).
 - **Place Search**: Global search for locations using the OSM Nominatim API.
 - **Current Location Focus**: Quick-access button to center the map on the user's live position.
+- **Media Support**: Users can attach photos to Asks and Broadcasts for better visual reporting.
 - **Radius Notifications**: Intelligent push notifications for nearby events.
 
 ## 2. Tech Stack
@@ -18,7 +19,7 @@ Main features:
 - **Backend**: Firebase
   - **Auth**: Firebase Authentication (Email/Password)
   - **Database**: Cloud Firestore (Real-time data)
-  - **Storage**: (Pending) Firebase Storage
+  - **Storage**: ✅ **Firebase Storage** (Media uploads)
   - **Messaging**: Firebase Cloud Messaging (FCM)
 - **Geolocation**:
   - `geolocator`: Live tracking and permission management.
@@ -39,12 +40,13 @@ Main features:
 - **FirestoreService**: Handles all database operations including geohashed writes and radius queries.
 - **NotificationService**: Manages FCM tokens, local notifications, and geohash-based topic subscriptions.
 - **GeoService**: Tracks live user location, manages the `geo_{geohash}` topic fallback, and provides OSM-based place search via Nominatim.
+- **StorageService**: Manages media uploads to Firebase Storage with organized folder structures.
 - **LocalStorageService**: Manages Hive-based persistence for faster offline startup.
 
 ## 5. Firebase Schema
 - `users/{uid}`: `{name, email, lastLocation: {lat, lng}, fcmToken, geohash}`
-- `asks/{id}`: `{userId, title, description, location: {geopoint, geohash}, createdAt, status}`
-- `broadcasts/{id}`: `{authorId, title, message, location: {geopoint, geohash}, radiusKm, severity, createdAt}`
+- `asks/{id}`: `{userId, title, description, imageUrl, location: {geopoint, geohash}, createdAt, status}`
+- `broadcasts/{id}`: `{authorId, title, message, imageUrl, location: {geopoint, geohash}, radiusKm, severity, createdAt}`
 - `asks/{id}/comments`: Sub-collection for real-time discussion.
 
 ## 6. Implementation Notes
@@ -60,6 +62,5 @@ Main features:
 - `lib/shared`: Reusable design-system components.
 
 ## 8. Next Steps
-1. **Media**: Integration of image uploads for broadcasts.
-2. **Background Tracking**: Implementation of `workmanager` for background location updates.
-3. **Map Clustering**: Enhancing Map performance for high-density areas.
+1. **Background Tracking**: Implementation of `workmanager` for background location updates.
+2. **Map Clustering**: Enhancing Map performance for high-density areas.

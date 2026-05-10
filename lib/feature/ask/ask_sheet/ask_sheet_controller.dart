@@ -1,4 +1,7 @@
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:geolinked/utils/app_exports.dart';
+import 'package:geolinked/services/storage_service.dart';
 
 class AskSheetGeoPoint {
   const AskSheetGeoPoint({required this.latitude, required this.longitude});
@@ -16,12 +19,14 @@ class AskSheetResult {
     required this.subject,
     required this.question,
     this.targetLocation,
+    this.imageUrl,
   });
 
   final int radiusMeters;
   final String subject;
   final String question;
   final AskSheetGeoPoint? targetLocation;
+  final String? imageUrl;
 }
 
 class AskSheetState {
@@ -29,11 +34,15 @@ class AskSheetState {
     required this.radiusMeters,
     this.targetLocation,
     this.locationName,
+    this.image,
+    this.isUploading = false,
   });
 
   final int radiusMeters;
   final AskSheetGeoPoint? targetLocation;
   final String? locationName;
+  final File? image;
+  final bool isUploading;
 
   AskSheetState copyWith({
     int? radiusMeters,
@@ -41,6 +50,9 @@ class AskSheetState {
     bool clearTargetLocation = false,
     String? locationName,
     bool clearLocationName = false,
+    File? image,
+    bool clearImage = false,
+    bool? isUploading,
   }) {
     return AskSheetState(
       radiusMeters: radiusMeters ?? this.radiusMeters,
@@ -50,6 +62,8 @@ class AskSheetState {
       locationName: clearLocationName
           ? null
           : (locationName ?? this.locationName),
+      image: clearImage ? null : (image ?? this.image),
+      isUploading: isUploading ?? this.isUploading,
     );
   }
 }
@@ -62,6 +76,7 @@ class AskSheetController extends Notifier<AskSheetState> {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final TextEditingController subjectController = TextEditingController();
   final TextEditingController questionController = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
 
   @override
   AskSheetState build() {
@@ -95,6 +110,26 @@ class AskSheetController extends Notifier<AskSheetState> {
     state = state.copyWith(radiusMeters: normalized);
   }
 
+  Future<void> pickImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+      if (pickedFile != null) {
+        state = state.copyWith(image: File(pickedFile.path));
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+    }
+  }
+
+  void removeImage() {
+    state = state.copyWith(clearImage: true);
+  }
+
   String? validateSubject(String? value) {
     final String input = (value ?? '').trim();
     if (input.isEmpty) {
@@ -121,9 +156,17 @@ class AskSheetController extends Notifier<AskSheetState> {
     return null;
   }
 
-  AskSheetResult? createResult() {
+  Future<AskSheetResult?> createResult() async {
     if (!formKey.currentState!.validate()) {
       return null;
+    }
+
+    String? imageUrl;
+    if (state.image != null) {
+      state = state.copyWith(isUploading: true);
+      final storage = StorageService.instance;
+      imageUrl = await storage.uploadPostImage(state.image!, 'asks');
+      state = state.copyWith(isUploading: false);
     }
 
     return AskSheetResult(
@@ -131,6 +174,7 @@ class AskSheetController extends Notifier<AskSheetState> {
       subject: subjectController.text.trim(),
       question: questionController.text.trim(),
       targetLocation: state.targetLocation,
+      imageUrl: imageUrl,
     );
   }
 }
