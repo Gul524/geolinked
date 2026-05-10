@@ -197,20 +197,10 @@ const _$ThemePreferenceEnumMap = {
   ThemePreference.dark: 'dark',
 };
 
-LoginRequest _$LoginRequestFromJson(Map<String, dynamic> json) => LoginRequest(
-  email: json['email'] as String,
-  password: json['password'] as String,
-);
 
 Map<String, dynamic> _$LoginRequestToJson(LoginRequest instance) =>
     <String, dynamic>{'email': instance.email, 'password': instance.password};
 
-SignupRequest _$SignupRequestFromJson(Map<String, dynamic> json) =>
-    SignupRequest(
-      name: json['name'] as String,
-      email: json['email'] as String,
-      password: json['password'] as String,
-    );
 
 Map<String, dynamic> _$SignupRequestToJson(SignupRequest instance) =>
     <String, dynamic>{

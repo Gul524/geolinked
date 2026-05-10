@@ -4,10 +4,15 @@ import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/model/models.dart';
 
 class BroadcastState {
-  const BroadcastState({required this.nearbyBroadcasts, required this.myBroadcasts});
+  const BroadcastState({
+    required this.nearbyBroadcasts,
+    required this.myBroadcasts,
+  });
 
   final List<BroadcastModel> nearbyBroadcasts;
   final List<BroadcastModel> myBroadcasts;
+
+  List<BroadcastModel> get allBroadcasts => [...myBroadcasts, ...nearbyBroadcasts];
 
   BroadcastState copyWith({
     List<BroadcastModel>? nearbyBroadcasts,
@@ -35,6 +40,12 @@ class BroadcastController extends Notifier<BroadcastState> {
 
     return const BroadcastState(nearbyBroadcasts: [], myBroadcasts: []);
   }
+
+  void initialize(BuildContext context) {
+    // Initialization logic if needed
+  }
+
+  String get subtitle => '${state.allBroadcasts.length} alerts active in your area';
 
   void _initListeners() {
     final userId = FirebaseAuth.instance.currentUser?.uid;
@@ -84,6 +95,17 @@ class BroadcastController extends Notifier<BroadcastState> {
     );
 
     await FirestoreService.instance.createBroadcast(broadcast);
+  }
+
+  Future<void> addComment(String broadcastId, String message) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    await FirestoreService.instance.addComment('broadcast', broadcastId, {
+      'userId': userId,
+      'message': message,
+      'authorName': FirebaseAuth.instance.currentUser?.displayName ?? 'Anonymous',
+    });
   }
 }
 

@@ -1,5 +1,5 @@
 import 'package:geolinked/utils/app_exports.dart';
-import 'package:geolinked/feature/ask/ask_controller.dart';
+import 'package:geolinked/model/models.dart';
 
 class AskHistoryItemWidget extends StatelessWidget {
   const AskHistoryItemWidget({
@@ -8,14 +8,14 @@ class AskHistoryItemWidget extends StatelessWidget {
     super.key,
   });
 
-  final AskHistoryItem item;
+  final AskModel item;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final Color primary = Theme.of(context).colorScheme.primary;
     final Color onSurface = Theme.of(context).colorScheme.onSurface;
-    final bool resolved = item.status == AskThreadStatus.resolved;
+    final bool resolved = item.status == AskStatus.resolved;
 
     return InkWell(
       onTap: onTap,
@@ -50,7 +50,7 @@ class AskHistoryItemWidget extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        item.timeAgo,
+                        'Just now', // Could use item.createdAt
                         style: Theme.of(context).textTheme.labelMedium
                             ?.copyWith(
                               color: onSurface.withValues(alpha: 0.45),
@@ -60,7 +60,7 @@ class AskHistoryItemWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    item.preview,
+                    item.description,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -73,10 +73,11 @@ class AskHistoryItemWidget extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 6,
                     children: <Widget>[
-                      _Pill(label: '💬 ${item.repliesCount} replies'),
-                      _Pill(
-                        label: '📍 ${item.distanceKm.toStringAsFixed(1)} km',
-                      ),
+                      _Pill(label: '💬 ${item.replyCount} replies'),
+                      if (item.latitude != null)
+                        _Pill(
+                          label: '📍 Nearby',
+                        ),
                       _Pill(label: resolved ? '✅ resolved' : '🟢 active'),
                     ],
                   ),

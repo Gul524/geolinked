@@ -1,5 +1,7 @@
+import 'dart:async';
+import 'package:geolinked/services/firestore_service.dart';
 import 'package:geolinked/utils/app_exports.dart';
-import 'package:geolinked/feature/ask/ask_controller.dart';
+import 'package:geolinked/model/models.dart';
 
 class AskDiscussionMessage {
   const AskDiscussionMessage({
@@ -21,108 +23,109 @@ class AskDiscussionMessage {
 
 class AskDiscussionState {
   const AskDiscussionState({
-    required this.item,
+    this.item,
     required this.messages,
     required this.isResolved,
+    this.isLoading = false,
   });
 
-  final AskHistoryItem item;
+  final AskModel? item;
   final List<AskDiscussionMessage> messages;
   final bool isResolved;
+  final bool isLoading;
 
   AskDiscussionState copyWith({
-    AskHistoryItem? item,
+    AskModel? item,
     List<AskDiscussionMessage>? messages,
     bool? isResolved,
+    bool? isLoading,
   }) {
     return AskDiscussionState(
       item: item ?? this.item,
       messages: messages ?? this.messages,
       isResolved: isResolved ?? this.isResolved,
+      isLoading: isLoading ?? this.isLoading,
     );
   }
 }
 
 class AskDiscussionController extends Notifier<AskDiscussionState> {
   final TextEditingController replyController = TextEditingController();
+  StreamSubscription? _commentsSubscription;
 
   @override
   AskDiscussionState build() {
-    ref.onDispose(replyController.dispose);
+    ref.onDispose(() {
+      replyController.dispose();
+      _commentsSubscription?.cancel();
+    });
 
-    return AskDiscussionState(
-      item: const AskHistoryItem(
-        id: 'a1',
-        title: 'Road open near Nursery chowk?',
-        preview: 'I heard there\'s some police activity. Is route clear now?',
-        timeAgo: '2 min ago',
-        distanceKm: 1.2,
-        repliesCount: 2,
-        status: AskThreadStatus.active,
-      ),
-      messages: const <AskDiscussionMessage>[
-        AskDiscussionMessage(
-          id: 'm1',
-          author: 'Ali R.',
-          text:
-              'Yes, there\'s a blockade near the petrol pump. Police set up a check post. You can divert from old Sabzi Mandi road.',
-          distanceText: '250m away',
-          timeAgo: '2 min ago',
-          isCurrentUser: false,
-        ),
-        AskDiscussionMessage(
-          id: 'm2',
-          author: 'Sara M.',
-          text:
-              'Can confirm. Was there 5 mins ago. Alternate route via Old Sabzi Mandi is clear.',
-          distanceText: '180m away',
-          timeAgo: '1 min ago',
-          isCurrentUser: false,
-        ),
-      ],
+    return const AskDiscussionState(
+      messages: [],
       isResolved: false,
     );
   }
 
-  void initialize(AskHistoryItem item) {
-    if (state.item.id == item.id) {
+  void initialize(AskModel item) {
+    if (state.item?.id == item.id) {
       return;
     }
 
-    state = state.copyWith(item: item, isResolved: false);
+    state = state.copyWith(item: item, isResolved: item.status == AskStatus.resolved);
+    _listenToComments(item.id);
   }
 
-  String get locationTitle => 'Nursery, Shahrah-e-Faisal';
+  void _listenToComments(String askId) {
+    _commentsSubscription?.cancel();
+    _commentsSubscription = FirestoreService.instance.getComments('ask', askId).listen((rawComments) {
+      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+      final List<AskDiscussionMessage> messages = rawComments.map((c) {
+        return AskDiscussionMessage(
+          id: '', // Firestore ID if needed
+          author: c['authorName'] ?? 'Someone',
+          text: c['message'] ?? '',
+          distanceText: '', // Could calculate if distance is stored in comment
+          timeAgo: 'Just now', // Use timeago package or similar
+          isCurrentUser: c['userId'] == currentUserId,
+        );
+      }).toList();
+      
+      state = state.copyWith(messages: messages.reversed.toList());
+    });
+  }
 
-  String get locationSubtitle =>
-      '${state.item.distanceKm.toStringAsFixed(1)} km away · 300m radius · Active';
+  String get locationTitle => 'Nearby User';
 
-  String get userQuestion => state.item.title;
+  String get locationSubtitle {
+    if (state.item == null) return '';
+    return 'Active · ${state.item!.replyCount} replies';
+  }
 
-  void sendReply() {
+  String get userQuestion => state.item?.title ?? '';
+
+  Future<void> sendReply() async {
     final String text = replyController.text.trim();
-    if (text.isEmpty) {
+    if (text.isEmpty || state.item == null) {
       return;
     }
 
-    final List<AskDiscussionMessage> updatedMessages = <AskDiscussionMessage>[
-      ...state.messages,
-      AskDiscussionMessage(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        author: 'You',
-        text: text,
-        distanceText: '',
-        timeAgo: 'Just now',
-        isCurrentUser: true,
-      ),
-    ];
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    final authorName = FirebaseAuth.instance.currentUser?.displayName ?? 'Anonymous';
 
     replyController.clear();
-    state = state.copyWith(messages: updatedMessages);
+    
+    await FirestoreService.instance.addComment('ask', state.item!.id, {
+      'userId': userId,
+      'message': text,
+      'authorName': authorName,
+    });
   }
 
   void markResolved() {
     state = state.copyWith(isResolved: true);
+    // Ideally update Firestore as well
   }
 }
 

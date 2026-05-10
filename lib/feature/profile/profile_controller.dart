@@ -123,7 +123,7 @@ class ProfileController extends Notifier<ProfileState> {
     
     return _fallbackProfile.copyWith(
       userName: user?.name ?? 'User',
-      handle: '@${user?.name?.toLowerCase().replaceAll(' ', '_') ?? 'user'}',
+      handle: '@${user?.name.toLowerCase().replaceAll(' ', '_') ?? 'user'}',
     );
   }
 

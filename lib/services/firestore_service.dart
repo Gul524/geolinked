@@ -18,7 +18,7 @@ class FirestoreService {
     final GeoFirePoint geoFirePoint = GeoFirePoint(
       GeoPoint(ask.latitude ?? 0, ask.longitude ?? 0),
     );
-    
+
     final Map<String, dynamic> data = ask.toJson();
     data['location'] = geoFirePoint.data;
     data['createdAt'] = FieldValue.serverTimestamp();
@@ -31,16 +31,24 @@ class FirestoreService {
     required double longitude,
     required double radiusKm,
   }) {
-    final GeoPoint center = GeoPoint(latitude, longitude);
-    final GeoCollectionReference<Map<String, dynamic>> geoRef = 
-        GeoCollectionReference(asks as CollectionReference<Map<String, dynamic>>);
+   final GeoFirePoint center = GeoFirePoint(GeoPoint(latitude, longitude));
+    final GeoCollectionReference<Map<String, dynamic>> geoRef =
+        GeoCollectionReference(
+          asks as CollectionReference<Map<String, dynamic>>,
+        );
 
-    return geoRef.subscribeWithin(
-      center: center,
-      radiusInKm: radiusKm,
-      field: 'location',
-      geohashField: 'geohash',
-    ).map((docs) => docs.map((doc) => AskModel.fromJson(doc.data()!)).toList());
+    return geoRef
+        .subscribeWithin(
+          center: center,
+          radiusInKm: radiusKm,
+          field: 'location',
+          geopointFrom: (data) =>
+              (data['location'] as Map<String, dynamic>)['geopoint']
+                  as GeoPoint,
+        )
+        .map(
+          (docs) => docs.map((doc) => AskModel.fromJson(doc.data()!)).toList(),
+        );
   }
 
   // BROADCASTS
@@ -61,20 +69,33 @@ class FirestoreService {
     required double longitude,
     required double radiusKm,
   }) {
-    final GeoPoint center = GeoPoint(latitude, longitude);
-    final GeoCollectionReference<Map<String, dynamic>> geoRef = 
-        GeoCollectionReference(broadcasts as CollectionReference<Map<String, dynamic>>);
+final GeoFirePoint center = GeoFirePoint(GeoPoint(latitude, longitude));
+    final GeoCollectionReference<Map<String, dynamic>> geoRef =
+        GeoCollectionReference(
+          broadcasts as CollectionReference<Map<String, dynamic>>,
+        );
 
-    return geoRef.subscribeWithin(
-      center: center,
-      radiusInKm: radiusKm,
-      field: 'location',
-      geohashField: 'geohash',
-    ).map((docs) => docs.map((doc) => BroadcastModel.fromJson(doc.data()!)).toList());
+    return geoRef
+        .subscribeWithin(
+          center: center,
+          radiusInKm: radiusKm,
+          field: 'location',
+          geopointFrom: (data) =>
+              (data['location'] as Map<String, dynamic>)['geopoint']
+                  as GeoPoint,
+        )
+        .map(
+          (docs) =>
+              docs.map((doc) => BroadcastModel.fromJson(doc.data()!)).toList(),
+        );
   }
 
   // COMMENTS / DISCUSSIONS
-  Future<void> addComment(String type, String postId, Map<String, dynamic> comment) async {
+  Future<void> addComment(
+    String type,
+    String postId,
+    Map<String, dynamic> comment,
+  ) async {
     final collection = type == 'ask' ? asks : broadcasts;
     await collection.doc(postId).collection('comments').add({
       ...comment,

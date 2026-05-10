@@ -1,101 +1,61 @@
 # GeoLinked Project Details
 
 ## 1. Project Overview
-GeoLinked is a Flutter app currently set up with:
-- Riverpod-based app state management for global theme mode and user session
-- Custom light and dark themes (iOS blue brand direction)
-- Animated splash flow
-- Home shell with a custom iOS-style bottom navigation bar
-- Secure Authentication flow (Login/Signup)
-- Global User state management
+GeoLinked is a location-based community messaging app that allows users to ask questions or broadcast updates to people within a specific radius.
 - **Project Status**: [PROJECT_STATUS.md](file:///home/sulemangul/.gemini/antigravity/brain/6e23af27-db2c-4306-a072-c0ca4be16352/project_status.md) (Task Tracking)
 
-Main entry point: [lib/main.dart](lib/main.dart)
+Main features:
+- **Asks**: Location-targeted queries (e.g., "Is the shop open?").
+- **Broadcasts**: News/alerts (e.g., "Traffic jam ahead") shared in a radius.
+- **Interactive Map**: Live view of community activity with reactive markers.
+- **Radius Notifications**: Intelligent push notifications for nearby events.
 
 ## 2. Tech Stack
-- **Flutter**: SDK constraint in [pubspec.yaml](pubspec.yaml)
-- **Riverpod 3.x**:
-  - Global Theme: [lib/configs/providers/theme_provider.dart](lib/configs/providers/theme_provider.dart)
-  - Global User: [lib/configs/providers/user_provider.dart](lib/configs/providers/user_provider.dart)
-- **Dio**: API communication in [lib/services/api_service.dart](lib/services/api_service.dart)
-- **Hive**: Local storage in [lib/services/local_storage_service.dart](lib/services/local_storage_service.dart)
-- **JSON Serializable**: Data models in [lib/model/models.dart](lib/model/models.dart)
+- **Flutter**: SDK ^3.10.4
+- **State Management**: Riverpod 3.x (Global Theme, User Session, Ask/Broadcast Streams)
+- **Backend**: Firebase
+  - **Auth**: Firebase Authentication (Email/Password)
+  - **Database**: Cloud Firestore (Real-time data)
+  - **Storage**: (Pending) Firebase Storage
+  - **Messaging**: Firebase Cloud Messaging (FCM)
+- **Geolocation**:
+  - `geolocator`: Live tracking.
+  - `geoflutterfire_plus`: Geohash-based radius queries.
+- **Local Cache**: Hive (Auth tokens, User ID, Profile data)
 
-## 3. Current App Flow
-1. App starts in [lib/main.dart](lib/main.dart)
-2. Initial route is splash via [lib/utils/routes.dart](lib/utils/routes.dart)
-3. Splash controller waits 2400ms then navigates to home (or onboarding if needed)
-4. Home shows a tab shell with custom bottom navigation
+## 3. Core App Flow
+1. **Startup**: Splash screen checks for Firebase session.
+2. **Auth**: Login/Signup creates/fetches profile from Firestore `users` collection.
+3. **Map**: Main screen displays markers for nearby `asks` and `broadcasts`.
+4. **Action**: Users tap the Map to select a target location for new posts.
+5. **Real-time**: Posts appear instantly for nearby users via Firestore streams and Geohash topic notifications.
 
-Route definitions:
-- Splash: [lib/feature/splash/splash_screen.dart](lib/feature/splash/splash_screen.dart)
-- Login: [lib/feature/auth/login/login_screen.dart](lib/feature/auth/login/login_screen.dart)
-- Signup: [lib/feature/auth/signup/signup_screen.dart](lib/feature/auth/signup/signup_screen.dart)
-- Home: [lib/feature/home/home_screen.dart](lib/feature/home/home_screen.dart)
+## 4. Key Services
+- **FirestoreService**: Handles all database operations including geohashed writes and radius queries.
+- **NotificationService**: Manages FCM tokens, local notifications, and geohash-based topic subscriptions.
+- **GeoService**: Tracks live user location and manages the `geo_{geohash}` topic fallback.
+- **LocalStorageService**: Manages Hive-based persistence for faster offline startup.
 
-## 4. Authentication Feature
-Implemented in `lib/feature/auth`:
-- **Login**: [lib/feature/auth/login/login_controller.dart](lib/feature/auth/login/login_controller.dart)
-- **Signup**: [lib/feature/auth/signup/signup_controller.dart](lib/feature/auth/signup/signup_controller.dart)
-- Uses `AuthResponse` model to handle JWT tokens and basic user info.
-- Automatically persists tokens using `LocalStorageService`.
+## 5. Firebase Schema
+- `users/{uid}`: `{name, email, lastLocation: {lat, lng}, fcmToken, geohash}`
+- `asks/{id}`: `{userId, title, description, location: {geopoint, geohash}, createdAt, status}`
+- `broadcasts/{id}`: `{authorId, title, message, location: {geopoint, geohash}, radiusKm, severity, createdAt}`
+- `asks/{id}/comments`: Sub-collection for real-time discussion.
 
-## 5. User Management
-Implemented globally via `UserProvider`:
-- **Global User State**: Holds the current `UserModel`.
-- **API Endpoints**:
-  - `GET /api/users/{id}`: Fetch full user profile.
-  - `PUT /api/users/{id}/location`: Update user's lat/lng.
-  - `PUT /api/users/{id}/notification-id`: Update Firebase Messaging token.
-- **Persistence**: User ID and Profile are cached locally for offline support.
+## 6. Implementation Notes
+- **Real-time Discussion**: Asks and Broadcasts both feature live discussion threads. These are implemented using Firestore sub-collections (`comments`). The `AskDiscussionController` and `BroadcastDiscussionController` subscribe to these sub-collections to provide a chat-like experience.
+- **Geohash Fallback**: Every user is subscribed to a topic named `geo_ABCDE` (where ABCDE is their 5-char geohash). This allows for instant area-wide broadcasts even without a backend query.
+- **Cloud Functions**: A Node.js trigger `onAskCreated` sends notifications to users within the exact radius defined in the post.
 
-## 6. State Management
-### Theme Mode
-Managed by `themeModeProvider` in [lib/configs/providers/theme_provider.dart](lib/configs/providers/theme_provider.dart).
-
-### User Session
-Managed by `userProvider` in [lib/configs/providers/user_provider.dart](lib/configs/providers/user_provider.dart).
-- `updateLocation()`: Updates latitude and longitude.
-- `updateNotificationId()`: Syncs FCM token to backend.
-
-## 7. Theming System
-Centralized in [lib/configs/theme/app_theme.dart](lib/configs/theme/app_theme.dart).
-- Primary: iOS blue family.
-- Design tokens for icons, radius, and images.
-
-## 8. Shared Components
-- **Bottom Navigation**: [lib/shared/widgets/custom_bottom_navigation_bar.dart](lib/shared/widgets/custom_bottom_navigation_bar.dart)
-- **App Messaging**: [lib/shared/widgets/app_messaging.dart](lib/shared/widgets/app_messaging.dart) (Toasts/Snackbars)
-- **Custom Buttons/Fields**: Standardized UI components.
-
-## 9. Services
-- **ApiService**: Dio wrapper with interceptors and error mapping.
-- **LocalStorageService**: Hive wrapper for persistent data.
-- **NotificationService**: Firebase Messaging integration.
-- **GeoService**: Location tracking and geocoding.
-
-## 10. Folder Structure
-- `lib/configs`: App configurations, theme, and providers.
-- `lib/feature`: Feature-based modules (auth, home, profile, etc.).
+## 7. Folder Structure
+- `lib/configs`: App constants, theme, and providers.
+- `lib/feature`: UI and Controllers grouped by feature (Auth, Home, Map, Ask, Broadcast).
 - `lib/model`: Data models with JSON serialization.
-- `lib/services`: External service integrations.
-- `lib/shared`: Reusable widgets.
-- `lib/utils`: Helpers, extensions, and route constants.
+- `lib/services`: External integrations (Firebase, Geo, Storage).
+- `lib/shared`: Reusable design-system components.
 
-## 11. Quality Status
-- Static analysis: Clean (`flutter analyze lib`).
-- Code Generation: Uses `json_serializable` and `build_runner`.
-
-## 12. Firebase Migration Strategy (Fast Track)
-To meet the rapid development timeline, the project is migrating from a custom .NET backend to Firebase:
-- **Auth**: Firebase Authentication (Email/Password).
-- **Database**: Cloud Firestore for real-time geolocation data.
-- **Search**: `geoflutterfire2` for radius-based queries.
-- **Notifications**: Cloud Functions for triggering radius-based push notifications.
-
-## 13. Next Steps
-1. **Infrastructure**: Add `firebase_auth`, `cloud_firestore`, and `geoflutterfire2` dependencies.
-2. **Auth**: Migrate `LoginController` and `SignupController` to Firebase Auth.
-3. **Data**: Implement Firestore repositories for Asks, Broadcasts, and Comments.
-4. **Geo**: Update `GeoService` to sync user location with geohashes to Firestore.
-5. **Map**: Implement real-time radius-based querying for map markers.
+## 8. Next Steps
+1. **Discussion UI**: Implement the chat-style screen for Asks/Broadcasts.
+2. **Media**: Integration of image uploads for broadcasts.
+3. **Background Tracking**: Implementation of `workmanager` for background location updates.
+4. **Map Clustering**: Enhancing Map performance for high-density areas.

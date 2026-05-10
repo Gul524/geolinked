@@ -1,3 +1,4 @@
+import 'package:geolinked/model/models.dart';
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/feature/broadcast/broadcast_controller.dart';
 import 'package:geolinked/feature/broadcast/broadcast_sheet/broadcast_sheet.dart';
@@ -43,25 +44,29 @@ class _BroadcastScreenState extends ConsumerState<BroadcastScreen> {
                   return;
                 }
 
+                await controller.createBroadcast(
+                  title: result.category,
+                  message: result.question,
+                  lat: 24.8607,
+                  lng: 67.0011,
+                  radiusKm: result.radiusMeters / 1000,
+                );
+
                 AppMessaging.showSuccess(
                   context,
-                  '${result.category} broadcast shared in ${result.radiusMeters}m radius.',
+                  'Broadcast shared successfully.',
                 );
               },
             ),
             const SizedBox(height: 2),
             Expanded(
               child: ListView.separated(
-                itemCount: state.items.length,
+                itemCount: state.allBroadcasts.length,
                 separatorBuilder: (_, _) => Divider(height: 1, color: divider),
                 itemBuilder: (BuildContext context, int index) {
-                  final item = state.items[index];
+                  final BroadcastModel item = state.allBroadcasts[index];
                   return BroadcastListItemWidget(
                     item: item,
-                    titleColor: controller.severityColor(
-                      context,
-                      item.severity,
-                    ),
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(

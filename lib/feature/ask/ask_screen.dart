@@ -1,3 +1,4 @@
+import 'package:geolinked/model/models.dart';
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/feature/ask/ask_controller.dart';
 import 'package:geolinked/feature/ask/ask_sheet/ask_sheet.dart';
@@ -41,18 +42,25 @@ class _AskScreenState extends ConsumerState<AskScreen> {
                   return;
                 }
 
+                await controller.createAsk(
+                  title: result.subject,
+                  description: result.question,
+                  lat: 24.8607,
+                  lng: 67.0011,
+                );
+
                 AppMessaging.showSuccess(
                   context,
-                  'Query submitted for ${result.radiusMeters}m nearby people.',
+                  'Query submitted successfully.',
                 );
               },
             ),
             Expanded(
               child: ListView.separated(
-                itemCount: state.items.length,
+                itemCount: state.allAsks.length,
                 separatorBuilder: (_, _) => Divider(height: 1, color: divider),
                 itemBuilder: (BuildContext context, int index) {
-                  final AskHistoryItem item = state.items[index];
+                  final AskModel item = state.allAsks[index];
 
                   return AskHistoryItemWidget(
                     item: item,
@@ -64,7 +72,6 @@ class _AskScreenState extends ConsumerState<AskScreen> {
                       );
                     },
                   );
-                  
                 },
               ),
             ),

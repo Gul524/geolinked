@@ -1,4 +1,4 @@
-package com.example.geolinked
+package com.sulemangul.geolinked
 
 import io.flutter.embedding.android.FlutterActivity
 

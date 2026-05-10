@@ -1,10 +1,10 @@
 import 'dart:async';
-
 import 'package:geocoding/geocoding.dart';
 import 'package:geolinked/configs/providers/user_provider.dart';
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:geoflutterfire_plus/geoflutterfire_plus.dart';
 
 class GeoRadiusInfo {
   const GeoRadiusInfo({required this.centerPoint, required this.radiusMeters});
@@ -34,6 +34,7 @@ class GeoService {
   factory GeoService() => _instance;
 
   StreamSubscription<Position>? _positionSubscription;
+  String? _currentGeoTopic;
 
   /// Starts listening to location changes and updates Firestore.
   void startLocationTracking(WidgetRef ref) async {
@@ -55,15 +56,39 @@ class GeoService {
         distanceFilter: 100, // Update every 100 meters
       ),
     ).listen((Position position) {
+      // 1. Update user location in Firestore
       ref.read(userProvider.notifier).updateLocation(
         position.latitude,
         position.longitude,
       );
+
+      // 2. Update Geo Topic Subscription (Topic Fallback)
+      _updateGeoTopicSubscription(position.latitude, position.longitude);
     });
+  }
+
+  /// Updates the geohash topic subscription based on current location.
+  /// Precision 4 covers approx 20km x 20km area.
+  /// Precision 5 covers approx 5km x 5km area.
+  void _updateGeoTopicSubscription(double lat, double lng) async {
+    final String newGeohash = GeoFirePoint(GeoPoint(lat, lng)).geohash.substring(0, 5);
+    final String newTopic = 'geo_$newGeohash';
+
+    if (_currentGeoTopic != newTopic) {
+      if (_currentGeoTopic != null) {
+        await NotificationService.instance.unsubscribeFromTopic(_currentGeoTopic!);
+      }
+      await NotificationService.instance.subscribeToTopic(newTopic);
+      _currentGeoTopic = newTopic;
+    }
   }
 
   void stopLocationTracking() {
     _positionSubscription?.cancel();
+    if (_currentGeoTopic != null) {
+      NotificationService.instance.unsubscribeFromTopic(_currentGeoTopic!);
+      _currentGeoTopic = null;
+    }
   }
 
   Future<Placemark?> geopointToPlacemark({required LatLng point}) async {
