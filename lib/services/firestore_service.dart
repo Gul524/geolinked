@@ -18,12 +18,17 @@ class FirestoreService {
     final GeoFirePoint geoFirePoint = GeoFirePoint(
       GeoPoint(ask.latitude ?? 0, ask.longitude ?? 0),
     );
-    
-    final Map<String, dynamic> data = ask.toJson();
+
+    final docRef = asks.doc();
+    final Map<String, dynamic> data = ask.copyWith(id: docRef.id).toJson();
     data['location'] = geoFirePoint.data;
     data['createdAt'] = FieldValue.serverTimestamp();
 
-    await asks.doc(ask.id).set(data);
+    await docRef.set(data);
+  }
+
+  Future<void> deleteAsk(String askId) async {
+    await asks.doc(askId).delete();
   }
 
   Stream<List<AskModel>> getNearbyAsks({
@@ -31,16 +36,24 @@ class FirestoreService {
     required double longitude,
     required double radiusKm,
   }) {
-    final GeoPoint center = GeoPoint(latitude, longitude);
-    final GeoCollectionReference<Map<String, dynamic>> geoRef = 
-        GeoCollectionReference(asks as CollectionReference<Map<String, dynamic>>);
+   final GeoFirePoint center = GeoFirePoint(GeoPoint(latitude, longitude));
+    final GeoCollectionReference<Map<String, dynamic>> geoRef =
+        GeoCollectionReference(
+          asks as CollectionReference<Map<String, dynamic>>,
+        );
 
-    return geoRef.subscribeWithin(
-      center: center,
-      radiusInKm: radiusKm,
-      field: 'location',
-      geohashField: 'geohash',
-    ).map((docs) => docs.map((doc) => AskModel.fromJson(doc.data()!)).toList());
+    return geoRef
+        .subscribeWithin(
+          center: center,
+          radiusInKm: radiusKm,
+          field: 'location',
+          geopointFrom: (data) =>
+              (data['location'] as Map<String, dynamic>)['geopoint']
+                  as GeoPoint,
+        )
+        .map(
+          (docs) => docs.map((doc) => AskModel.fromJson(doc.data()!)).toList(),
+        );
   }
 
   // BROADCASTS
@@ -49,11 +62,17 @@ class FirestoreService {
       GeoPoint(broadcast.latitude ?? 0, broadcast.longitude ?? 0),
     );
 
-    final Map<String, dynamic> data = broadcast.toJson();
+    final docRef = broadcasts.doc();
+    final Map<String, dynamic> data =
+        broadcast.copyWith(id: docRef.id).toJson();
     data['location'] = geoFirePoint.data;
     data['createdAt'] = FieldValue.serverTimestamp();
 
-    await broadcasts.doc(broadcast.id).set(data);
+    await docRef.set(data);
+  }
+
+  Future<void> deleteBroadcast(String broadcastId) async {
+    await broadcasts.doc(broadcastId).delete();
   }
 
   Stream<List<BroadcastModel>> getNearbyBroadcasts({
@@ -61,25 +80,47 @@ class FirestoreService {
     required double longitude,
     required double radiusKm,
   }) {
-    final GeoPoint center = GeoPoint(latitude, longitude);
-    final GeoCollectionReference<Map<String, dynamic>> geoRef = 
-        GeoCollectionReference(broadcasts as CollectionReference<Map<String, dynamic>>);
+final GeoFirePoint center = GeoFirePoint(GeoPoint(latitude, longitude));
+    final GeoCollectionReference<Map<String, dynamic>> geoRef =
+        GeoCollectionReference(
+          broadcasts as CollectionReference<Map<String, dynamic>>,
+        );
 
-    return geoRef.subscribeWithin(
-      center: center,
-      radiusInKm: radiusKm,
-      field: 'location',
-      geohashField: 'geohash',
-    ).map((docs) => docs.map((doc) => BroadcastModel.fromJson(doc.data()!)).toList());
+    return geoRef
+        .subscribeWithin(
+          center: center,
+          radiusInKm: radiusKm,
+          field: 'location',
+          geopointFrom: (data) =>
+              (data['location'] as Map<String, dynamic>)['geopoint']
+                  as GeoPoint,
+        )
+        .map(
+          (docs) =>
+              docs.map((doc) => BroadcastModel.fromJson(doc.data()!)).toList(),
+        );
   }
 
   // COMMENTS / DISCUSSIONS
-  Future<void> addComment(String type, String postId, Map<String, dynamic> comment) async {
+  Future<void> addComment(
+    String type,
+    String postId,
+    Map<String, dynamic> comment,
+  ) async {
     final collection = type == 'ask' ? asks : broadcasts;
     await collection.doc(postId).collection('comments').add({
       ...comment,
       'createdAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  Future<void> deleteComment(
+    String type,
+    String postId,
+    String commentId,
+  ) async {
+    final collection = type == 'ask' ? asks : broadcasts;
+    await collection.doc(postId).collection('comments').doc(commentId).delete();
   }
 
   Stream<List<Map<String, dynamic>>> getComments(String type, String postId) {
@@ -89,6 +130,18 @@ class FirestoreService {
         .collection('comments')
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => <String, dynamic>{...doc.data(), 'id': doc.id})
+              .toList(),
+        );
+  }
+
+  Future<void> incrementViewCount(String type, String postId) async {
+    final collection = type == 'ask' ? asks : broadcasts;
+    final field = type == 'ask' ? 'viewCount' : 'seenCount';
+    await collection.doc(postId).update({
+      field: FieldValue.increment(1),
+    });
   }
 }

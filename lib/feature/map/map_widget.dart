@@ -1,9 +1,10 @@
 import 'dart:async';
-
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
+import 'package:geolinked/feature/home/home_controller.dart';
 import 'package:geolinked/feature/map/map_controller.dart';
 import 'package:geolinked/feature/map/map_state.dart';
-import 'package:geolinked/utils/exports.dart';
+import 'package:geolinked/utils/app_exports.dart';
 import 'package:latlong2/latlong.dart';
 
 class HomeMapWidget extends ConsumerStatefulWidget {
@@ -17,14 +18,12 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
   static const LatLng _defaultCenter = LatLng(24.8607, 67.0011);
   final MapController _mapController = MapController();
 
-  List<Marker> _buildMarkers(HomeMapState state) {
-    return <Marker>[
-      if (state.targetLocation != null)
-        _buildTargetLocationMark(state.targetLocation!),
-      ..._buildBroadcastMarks(state.broadcasts),
-      if (state.currentLocation != null)
-        _buildCurrentLocationMark(state.currentLocation!),
-    ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(homeMapControllerProvider.notifier).initialize();
+    });
   }
 
   Marker _buildTargetLocationMark(LatLng point) {
@@ -36,25 +35,21 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
     );
   }
 
-  List<Marker> _buildBroadcastMarks(List<LatLng> points) {
-    return points
-        .map(
-          (LatLng point) => Marker(
-            point: point,
-            width: 28,
-            height: 28,
-            child: const _DotMarker(color: Color(0xFF00A86B)),
-          ),
-        )
-        .toList(growable: false);
-  }
-
   Marker _buildCurrentLocationMark(LatLng point) {
     return Marker(
       point: point,
       width: 22,
       height: 22,
       child: const _DotMarker(color: Color(0xFF007AFF)),
+    );
+  }
+
+  Marker _buildCommunityMarker(MapMarkerData data) {
+    return Marker(
+      point: data.position,
+      width: 32,
+      height: 32,
+      child: _CustomCategoryMarker(data: data),
     );
   }
 
@@ -87,14 +82,11 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
     ref.listen<HomeMapState>(homeMapControllerProvider, _handleCameraRequest);
 
     final Color onSurface = Theme.of(context).colorScheme.onSurface;
-    final List<Marker> markers = _buildMarkers(state);
-    final LatLng initialCenter = state.targetLocation ?? _defaultCenter;
+    final LatLng initialCenter = state.currentLocation ?? _defaultCenter;
 
-    final List<LatLng> routePoints = <LatLng>[
-      if (state.currentLocation != null) state.currentLocation!,
-      ...state.points,
-      if (state.targetLocation != null) state.targetLocation!,
-    ];
+    final List<Marker> communityMarkers = state.communityMarkers
+        .map((data) => _buildCommunityMarker(data))
+        .toList();
 
     return SafeArea(
       child: Stack(
@@ -110,7 +102,6 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
                 if (!state.isTargetSlecting) {
                   return;
                 }
-
                 mapController.selectTargetLocation(point);
               },
             ),
@@ -121,77 +112,181 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
                 subdomains: const <String>['a', 'b', 'c', 'd'],
                 userAgentPackageName: 'com.geolinked.app',
               ),
-              if (routePoints.length > 1)
-                PolylineLayer(
-                  polylines: <Polyline>[
-                    Polyline(
-                      points: routePoints,
-                      strokeWidth: 3,
-                      color: const Color(0xFF007AFF).withValues(alpha: 0.8),
-                    ),
-                  ],
+              MarkerClusterLayerWidget(
+                options: MarkerClusterLayerOptions(
+                  maxClusterRadius: 45,
+                  size: const Size(40, 40),
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.all(50),
+                  markers: communityMarkers,
+                  builder: (context, markers) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        color: Theme.of(context).colorScheme.primary,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          markers.length.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              MarkerLayer(markers: markers),
+              ),
+              MarkerLayer(
+                markers: [
+                  if (state.targetLocation != null)
+                    _buildTargetLocationMark(state.targetLocation!),
+                  if (state.currentLocation != null)
+                    _buildCurrentLocationMark(state.currentLocation!),
+                ],
+              ),
               RichAttributionWidget(
                 attributions: <SourceAttribution>[
                   TextSourceAttribution(
                     '© OpenStreetMap contributors',
-                    textStyle: TextStyle(fontSize: 11),
-                  ),
-                  TextSourceAttribution(
-                    '© CARTO',
-                    textStyle: TextStyle(fontSize: 11),
+                    textStyle: const TextStyle(fontSize: 11),
                   ),
                 ],
               ),
             ],
           ),
+          // Search Bar
           Positioned(
             top: 14,
             left: 14,
             right: 14,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.94),
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: <BoxShadow>[
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+            child: Column(
+              children: <Widget>[
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.94),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: <Widget>[
-                    const Icon(
-                      Icons.public_rounded,
-                      color: Color(0xFF007AFF),
-                      size: 18,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 2,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Live community map',
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: onSurface,
-                          fontWeight: FontWeight.w700,
+                    child: Row(
+                      children: <Widget>[
+                        const Icon(
+                          Icons.search,
+                          color: Color(0xFF007AFF),
+                          size: 20,
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            onChanged: mapController.searchPlaces,
+                            decoration: const InputDecoration(
+                              hintText: 'Search places...',
+                              border: InputBorder.none,
+                              isDense: true,
+                            ),
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: onSurface,
+                                ),
+                          ),
+                        ),
+                        if (state.isLoading)
+                          const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          ),
+                      ],
                     ),
-                    Text(
-                      'English',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: onSurface.withValues(alpha: 0.65),
-                        fontWeight: FontWeight.w600,
-                      ),
+                  ),
+                ),
+                if (state.searchResults.isNotEmpty)
+                  Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: <BoxShadow>[
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      padding: EdgeInsets.zero,
+                      itemCount: state.searchResults.length,
+                      separatorBuilder: (context, index) =>
+                          const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final result = state.searchResults[index];
+                        return ListTile(
+                          title: Text(
+                            result.displayName,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          onTap: () {
+                            mapController.selectSearchResult(result);
+                            FocusScope.of(context).unfocus();
+                          },
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          // My Location Button
+          Positioned(
+            bottom: state.isConfirmingLocation ? 100 : 20,
+            left: 20,
+            child: GestureDetector(
+              onTap: mapController.moveToCurrentLocation,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: <BoxShadow>[
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
                     ),
                   ],
+                ),
+                child: const Icon(
+                  Icons.my_location,
+                  color: Color(0xFF007AFF),
+                  size: 22,
                 ),
               ),
             ),
@@ -212,7 +307,7 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: <BoxShadow>[
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
+                        color: Colors.black.withOpacity(0.15),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),
@@ -220,7 +315,6 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
-                    spacing: 12,
                     children: <Widget>[
                       GestureDetector(
                         onTap: mapController.cancelLocationConfirmation,
@@ -237,6 +331,7 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
                           ),
                         ),
                       ),
+                      const SizedBox(width: 12),
                       GestureDetector(
                         onTap: () async {
                           if (state.targetLocation != null && context.mounted) {
@@ -269,6 +364,86 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
   }
 }
 
+class _CustomCategoryMarker extends StatelessWidget {
+  const _CustomCategoryMarker({required this.data});
+
+  final MapMarkerData data;
+
+  @override
+  Widget build(BuildContext context) {
+    if (data.type == 'ask') {
+      return _MarkerContainer(
+        color: const Color(0xFF16A34A),
+        icon: Icons.help_outline_rounded,
+      );
+    }
+
+    Color color = const Color(0xFF2563EB);
+    IconData icon = Icons.info_outline_rounded;
+
+    switch (data.category) {
+      case 'Traffic':
+        color = const Color(0xFFEA580C);
+        icon = Icons.traffic_rounded;
+        break;
+      case 'Road Block':
+        color = const Color(0xFFDC2626);
+        icon = Icons.block_flipped;
+        break;
+      case 'Safety Alert':
+        color = const Color(0xFFDC2626);
+        icon = Icons.warning_amber_rounded;
+        break;
+      case 'Utility Issue':
+        color = const Color(0xFF854D0E);
+        icon = Icons.build_circle_rounded;
+        break;
+      case 'Market Update':
+        color = const Color(0xFF0D9488);
+        icon = Icons.shopping_bag_rounded;
+        break;
+      case 'Public Event':
+        color = const Color(0xFF7C3AED);
+        icon = Icons.event_note_rounded;
+        break;
+    }
+
+    return _MarkerContainer(color: color, icon: icon);
+  }
+}
+
+class _MarkerContainer extends StatelessWidget {
+  const _MarkerContainer({required this.color, required this.icon});
+
+  final Color color;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Icon(
+          icon,
+          color: Colors.white,
+          size: 16,
+        ),
+      ),
+    );
+  }
+}
+
 class _CenterPulseMarker extends StatelessWidget {
   const _CenterPulseMarker();
 
@@ -280,7 +455,7 @@ class _CenterPulseMarker extends StatelessWidget {
         height: 26,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: const Color(0xFF007AFF).withValues(alpha: 0.18),
+          color: const Color(0xFF007AFF).withOpacity(0.18),
         ),
         child: Center(
           child: Container(
@@ -311,7 +486,7 @@ class _DotMarker extends StatelessWidget {
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),

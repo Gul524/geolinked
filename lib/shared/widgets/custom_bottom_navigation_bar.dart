@@ -8,12 +8,30 @@ class CustomBottomNavigationItem {
     required this.label,
     this.activeColor,
     this.inactiveColor,
+    this.hasBadge = false,
   });
 
   final IconData icon;
   final String label;
   final Color? activeColor;
   final Color? inactiveColor;
+  final bool hasBadge;
+
+  CustomBottomNavigationItem copyWith({
+    IconData? icon,
+    String? label,
+    Color? activeColor,
+    Color? inactiveColor,
+    bool? hasBadge,
+  }) {
+    return CustomBottomNavigationItem(
+      icon: icon ?? this.icon,
+      label: label ?? this.label,
+      activeColor: activeColor ?? this.activeColor,
+      inactiveColor: inactiveColor ?? this.inactiveColor,
+      hasBadge: hasBadge ?? this.hasBadge,
+    );
+  }
 }
 
 class BottomNavRoundIcon extends StatelessWidget {
@@ -24,6 +42,7 @@ class BottomNavRoundIcon extends StatelessWidget {
     required this.primary,
     required this.activeColor,
     required this.inactiveColor,
+    this.hasBadge = false,
     super.key,
   });
   final String label;
@@ -32,6 +51,7 @@ class BottomNavRoundIcon extends StatelessWidget {
   final Color primary;
   final Color activeColor;
   final Color inactiveColor;
+  final bool hasBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +68,25 @@ class BottomNavRoundIcon extends StatelessWidget {
         padding: const EdgeInsets.all(4.0),
         child: Column(
           children: [
-            Icon(icon, size: 15, color: selected ? activeColor : inactiveColor),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(icon, size: 15, color: selected ? activeColor : inactiveColor),
+                if (hasBadge)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Colors.redAccent,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
             const SizedBox(height: 3),
             Text(
               label,
@@ -124,6 +162,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
                               primary: primary,
                               activeColor: iconActiveColor,
                               inactiveColor: iconInactiveColor,
+                              hasBadge: item.hasBadge,
                             ),
                           ],
                         ),

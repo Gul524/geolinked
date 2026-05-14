@@ -1,123 +1,84 @@
+import 'dart:async';
 import 'package:geolinked/utils/app_exports.dart';
 
 class OtpVerificationState {
-  const OtpVerificationState({required this.isSubmitting});
+  const OtpVerificationState({
+    required this.isSubmitting,
+    required this.isResending,
+  });
 
   final bool isSubmitting;
+  final bool isResending;
 
-  OtpVerificationState copyWith({bool? isSubmitting}) {
+  OtpVerificationState copyWith({bool? isSubmitting, bool? isResending}) {
     return OtpVerificationState(
       isSubmitting: isSubmitting ?? this.isSubmitting,
+      isResending: isResending ?? this.isResending,
     );
   }
 }
 
 class OtpVerificationController extends Notifier<OtpVerificationState> {
-  static const String _apiPath = '/auth/otp/verify';
-
-  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-  final TextEditingController otpController = TextEditingController();
+  Timer? _timer;
 
   @override
   OtpVerificationState build() {
-    ref.onDispose(otpController.dispose);
-    return const OtpVerificationState(isSubmitting: false);
+    ref.onDispose(() => _timer?.cancel());
+    return const OtpVerificationState(isSubmitting: false, isResending: false);
   }
 
-  Future<void> onVerifyPressed(
-    BuildContext context, {
-    required String email,
-  }) async {
-    if (state.isSubmitting) {
-      return;
-    }
-
-    if (!formKey.currentState!.validate()) {
-      AppMessaging.showWarning(context, 'Please enter valid OTP code.');
-      return;
-    }
-
+  /// Refreshes the user state to check if email is verified.
+  Future<void> onCheckStatusPressed(BuildContext context) async {
     state = state.copyWith(isSubmitting: true);
 
     try {
-      final ApiResult<dynamic> result = await ApiService.instance.post(
-        _apiPath,
-        data: <String, dynamic>{
-          'email': email,
-          'otp': otpController.text.trim(),
-        },
-      );
+      final User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw 'User session lost. Please login again.';
 
-      if (!result.success) {
-        AppMessaging.showError(
-          context,
-          result.errorMessage ?? 'OTP verification failed.',
-        );
-        return;
+      await user.reload();
+      final User? updatedUser = FirebaseAuth.instance.currentUser;
+
+      if (updatedUser?.emailVerified ?? false) {
+        if (context.mounted) {
+          AppMessaging.showSuccess(context, 'Email verified! Welcome to GeoLinked.');
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            AppRoutes.home,
+            (Route<dynamic> route) => false,
+          );
+        }
+      } else {
+        if (context.mounted) {
+          AppMessaging.showWarning(context, 'Email not yet verified. Please check your inbox.');
+        }
       }
-
-      final String? token = _extractToken(result.data);
-      if (token != null && token.isNotEmpty) {
-        ApiService.instance.setAuthToken(token);
-        await LocalStorageService.instance.put(
-          AppConstants.authTokenKey,
-          token,
-        );
-      }
-
-      AppMessaging.showSuccess(context, 'Account created for $email');
-      await Future<void>.delayed(const Duration(milliseconds: 400));
-
-      if (!context.mounted) {
-        return;
-      }
-
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        AppRoutes.login,
-        (Route<dynamic> route) => false,
-      );
+    } catch (e) {
+      if (context.mounted) AppMessaging.showError(context, e.toString());
     } finally {
       state = state.copyWith(isSubmitting: false);
     }
   }
 
-  String? validateOtp(String? value) {
-    final String input = (value ?? '').trim();
-    if (input.isEmpty) {
-      return 'OTP is required';
-    }
+  /// Resends the verification email.
+  Future<void> onResendPressed(BuildContext context) async {
+    state = state.copyWith(isResending: true);
 
-    if (input.length != 6) {
-      return 'OTP must be 6 digits';
-    }
+    try {
+      final User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw 'Session lost.';
 
-    final bool allDigits = RegExp(r'^\d{6}$').hasMatch(input);
-    if (!allDigits) {
-      return 'OTP must contain only digits';
-    }
-
-    return null;
-  }
-
-  String? _extractToken(dynamic payload) {
-    if (payload is Map<String, dynamic>) {
-      final dynamic token =
-          payload['token'] ?? payload['accessToken'] ?? payload['authToken'];
-      if (token is String && token.isNotEmpty) {
-        return token;
+      await user.sendEmailVerification();
+      if (context.mounted) {
+        AppMessaging.showSuccess(context, 'Verification email resent!');
       }
-
-      final dynamic data = payload['data'];
-      if (data is Map<String, dynamic>) {
-        return _extractToken(data);
-      }
+    } catch (e) {
+      if (context.mounted) AppMessaging.showError(context, 'Failed to resend: $e');
+    } finally {
+      state = state.copyWith(isResending: false);
     }
-
-    return null;
   }
 }
 
 final otpVerificationControllerProvider =
     NotifierProvider<OtpVerificationController, OtpVerificationState>(
-      OtpVerificationController.new,
-    );
+  OtpVerificationController.new,
+);

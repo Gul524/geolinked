@@ -108,6 +108,7 @@ class HomeController extends Notifier<HomeState> {
             description: askResult.question,
             lat: point.latitude,
             lng: point.longitude,
+            imageUrl: askResult.imageUrl,
           );
 
       AppMessaging.showSuccess(
@@ -140,11 +141,12 @@ class HomeController extends Notifier<HomeState> {
     if (context.mounted && broadcastResult != null) {
       // Submit to Firebase
       await ref.read(broadcastControllerProvider.notifier).createBroadcast(
-            title: broadcastResult.category,
+            category: broadcastResult.category,
             message: broadcastResult.question,
             lat: point.latitude,
             lng: point.longitude,
             radiusKm: broadcastResult.radiusMeters / 1000,
+            imageUrl: broadcastResult.imageUrl,
           );
 
       AppMessaging.showSuccess(

@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:geolinked/feature/ask/ask_discussion_controller.dart';
 
 class AskMessageBubbleWidget extends StatelessWidget {
-  const AskMessageBubbleWidget({required this.message, super.key});
+  const AskMessageBubbleWidget({
+    required this.message,
+    this.onDelete,
+    super.key,
+  });
 
   final AskDiscussionMessage message;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -43,11 +48,14 @@ class AskMessageBubbleWidget extends StatelessWidget {
                 ),
               ],
             ),
-            child: Text(
-              message.text,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: self ? Colors.white : null,
-                height: 1.35,
+            child: InkWell(
+              onLongPress: onDelete,
+              child: Text(
+                message.text,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: self ? Colors.white : null,
+                  height: 1.35,
+                ),
               ),
             ),
           ),

@@ -24,31 +24,24 @@ class CustomChipWidget extends StatelessWidget {
     final Color background = foreground.withValues(alpha: 0.14);
 
     final Widget chip = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: foreground.withValues(alpha: 0.22)),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: foreground.withValues(alpha: 0.15)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(iconData, size: 14, color: foreground),
-          const SizedBox(width: 6),
-          Column(
-            children: [
-              Wrap(
-                children: [
-                  Text(
-                    text,
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: foreground,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+          Icon(iconData, size: 13, color: foreground),
+          const SizedBox(width: 7),
+          Text(
+            text,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: foreground,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.2,
+                ),
           ),
         ],
       ),

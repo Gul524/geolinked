@@ -67,8 +67,8 @@ class SignupScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Checkbox(
-                    value: false,
-                    onChanged: (_) {},
+                    value: state.termsAccepted,
+                    onChanged: controller.toggleTerms,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(4),
                     ),
@@ -78,25 +78,35 @@ class SignupScreen extends ConsumerWidget {
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.only(top: 12),
-                      child: Text.rich(
-                        TextSpan(
-                          text: 'I agree to the ',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withValues(alpha: 0.6),
-                                fontWeight: FontWeight.w600,
+                      child: GestureDetector(
+                        onTap: () async {
+                          final bool? accepted = await Navigator.of(context)
+                              .pushNamed(AppRoutes.terms) as bool?;
+                          if (accepted == true) {
+                            controller.toggleTerms(true);
+                          }
+                        },
+                        child: Text.rich(
+                          TextSpan(
+                            text: 'I agree to the ',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withValues(alpha: 0.6),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                            children: <InlineSpan>[
+                              TextSpan(
+                                text: 'Terms & Conditions',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontWeight: FontWeight.w700,
+                                  decoration: TextDecoration.underline,
+                                ),
                               ),
-                          children: <InlineSpan>[
-                            TextSpan(
-                              text: 'Terms of Service',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -108,7 +118,7 @@ class SignupScreen extends ConsumerWidget {
                 label: state.isSubmitting
                     ? 'Creating account...'
                     : 'Create account',
-                onPressed: state.isSubmitting
+                onPressed: (state.isSubmitting || !state.termsAccepted)
                     ? null
                     : () => controller.onSignupPressed(context),
               ),

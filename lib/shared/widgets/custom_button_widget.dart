@@ -7,6 +7,7 @@ class CustomButtonWidget extends StatelessWidget {
     this.isPrimary = true,
     this.height = 50,
     this.borderRadius = 18,
+    this.isLoading = false,
     super.key,
   });
 
@@ -15,15 +16,17 @@ class CustomButtonWidget extends StatelessWidget {
   final bool isPrimary;
   final double height;
   final double borderRadius;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     if (isPrimary) {
       return _PrimaryGradientButton(
         label: label,
-        onPressed: onPressed,
+        onPressed: isLoading ? null : onPressed,
         height: height,
         borderRadius: borderRadius,
+        isLoading: isLoading,
       );
     }
 
@@ -31,7 +34,7 @@ class CustomButtonWidget extends StatelessWidget {
       width: double.infinity,
       height: height,
       child: OutlinedButton(
-        onPressed: onPressed,
+        onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
           side: BorderSide(
             color: Theme.of(context).colorScheme.primary,
@@ -41,13 +44,19 @@ class CustomButtonWidget extends StatelessWidget {
             borderRadius: BorderRadius.circular(borderRadius),
           ),
         ),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            color: Theme.of(context).colorScheme.primary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        child: isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Text(
+                label,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
       ),
     );
   }
@@ -59,17 +68,19 @@ class _PrimaryGradientButton extends StatelessWidget {
     required this.onPressed,
     required this.height,
     required this.borderRadius,
+    required this.isLoading,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final double height;
   final double borderRadius;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     final Color primary = Theme.of(context).colorScheme.primary;
-    final bool enabled = onPressed != null;
+    final bool enabled = onPressed != null || isLoading;
 
     return SizedBox(
       width: double.infinity,
@@ -77,7 +88,7 @@ class _PrimaryGradientButton extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(borderRadius),
-          gradient: enabled
+          gradient: enabled && !isLoading
               ? LinearGradient(
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
@@ -87,17 +98,13 @@ class _PrimaryGradientButton extends StatelessWidget {
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                   colors: <Color>[
-                    Theme.of(
-                      context,
-                    ).colorScheme.outline.withValues(alpha: 0.5),
-                    Theme.of(
-                      context,
-                    ).colorScheme.outline.withValues(alpha: 0.5),
+                    Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+                    Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
                   ],
                 ),
         ),
         child: ElevatedButton(
-          onPressed: onPressed,
+          onPressed: isLoading ? null : onPressed,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.transparent,
             disabledBackgroundColor: Colors.transparent,
@@ -107,13 +114,22 @@ class _PrimaryGradientButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(borderRadius),
             ),
           ),
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onPrimary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          child: isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Text(
+                  label,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
         ),
       ),
     );

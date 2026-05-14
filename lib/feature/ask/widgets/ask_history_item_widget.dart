@@ -1,21 +1,23 @@
 import 'package:geolinked/utils/app_exports.dart';
-import 'package:geolinked/feature/ask/ask_controller.dart';
+import 'package:geolinked/model/models.dart';
 
 class AskHistoryItemWidget extends StatelessWidget {
   const AskHistoryItemWidget({
     required this.item,
     required this.onTap,
+    this.onDelete,
     super.key,
   });
 
-  final AskHistoryItem item;
+  final AskModel item;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
     final Color primary = Theme.of(context).colorScheme.primary;
     final Color onSurface = Theme.of(context).colorScheme.onSurface;
-    final bool resolved = item.status == AskThreadStatus.resolved;
+    final bool resolved = item.status == AskStatus.resolved;
 
     return InkWell(
       onTap: onTap,
@@ -50,17 +52,38 @@ class AskHistoryItemWidget extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        item.timeAgo,
+                        'Just now',
                         style: Theme.of(context).textTheme.labelMedium
                             ?.copyWith(
                               color: onSurface.withValues(alpha: 0.45),
                             ),
                       ),
+                      if (onDelete != null)
+                        PopupMenuButton<int>(
+                          icon: Icon(
+                            Icons.more_vert_rounded,
+                            size: 18,
+                            color: onSurface.withValues(alpha: 0.4),
+                          ),
+                          padding: EdgeInsets.zero,
+                          onSelected: (val) {
+                            if (val == 0) onDelete!();
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 0,
+                              child: Text(
+                                'Delete',
+                                style: TextStyle(color: Colors.redAccent),
+                              ),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    item.preview,
+                    item.description,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -69,15 +92,32 @@ class AskHistoryItemWidget extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: <Widget>[
-                      _Pill(label: '💬 ${item.repliesCount} replies'),
-                      _Pill(
-                        label: '📍 ${item.distanceKm.toStringAsFixed(1)} km',
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          children: <Widget>[
+                            _Pill(label: '💬 ${item.replyCount}'),
+                            if (item.latitude != null)
+                              _Pill(label: '📍 Nearby'),
+                            _Pill(label: resolved ? '✅ resolved' : '🟢 active'),
+                          ],
+                        ),
                       ),
-                      _Pill(label: resolved ? '✅ resolved' : '🟢 active'),
+                      if (item.imageUrl != null)
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            image: DecorationImage(
+                              image: NetworkImage(item.imageUrl!),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ],

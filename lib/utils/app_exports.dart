@@ -1,43 +1,37 @@
+// Centralized utilities and common widgets ONLY.
+// Avoid exporting screens or large third-party packages here to maintain Hot Reload speed.
+
 // flutter
 export 'package:flutter/material.dart';
 export 'package:flutter_riverpod/flutter_riverpod.dart';
+
+// firebase (Essential base classes)
+export 'package:firebase_core/firebase_core.dart';
+export 'package:geolinked/firebase_options.dart';
 export 'package:firebase_auth/firebase_auth.dart';
 export 'package:cloud_firestore/cloud_firestore.dart';
+
+// packages 
 
 // configs
 export '../configs/constants.dart';
 export '../configs/providers/theme_provider.dart';
 export '../configs/theme/app_theme.dart';
 
-// routes
+// utils
 export 'routes.dart';
 
 // services
-export '../services/api_service.dart';
-export '../services/data_flow_service.dart';
-export '../services/geo_service.dart';
 export '../services/local_storage_service.dart';
+export '../services/api_service.dart';
 export '../services/notification_service.dart';
+export 'package:geolinked/services/geo_service.dart';
 
-// shared widgets
-export '../shared/widgets/app_messaging.dart';
+// shared widgets (Common across all features)
 export '../shared/widgets/app_text_field.dart';
 export '../shared/widgets/custom_button_widget.dart';
 export '../shared/widgets/custom_chip_widget.dart';
 export '../shared/widgets/custom_bottom_navigation_bar.dart';
-export '../shared/widgets/custom_dropdown.dart';
-export '../shared/widgets/custom_search_field.dart';
-
-// screens
-export '../feature/splash/splash_screen.dart';
-export '../feature/onboarding/onboarding_screen.dart';
-export '../feature/home/home_screen.dart';
-export '../feature/auth/login/login_screen.dart';
-export '../feature/auth/signup/signup_screen.dart';
-export '../feature/auth/signup/otp_verification_screen.dart';
+export '../shared/widgets/app_messaging.dart';
 export '../feature/auth/widgets/auth_shell_widget.dart';
-export '../feature/ask/ask_screen.dart';
-export '../feature/ask/ask_discussion_screen.dart';
-export '../feature/broadcast/broadcast_screen.dart';
-export '../feature/broadcast/broadcast_discussion_screen.dart';
-export '../feature/profile/profile_screen.dart';
+export '../shared/widgets/custom_dropdown.dart';

@@ -1,0 +1,29 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper: Is the user logged in?
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Match all post images
+    match /posts/{folder}/{userId}/{fileName} {
+      // Any authenticated user can view community images
+      allow read: if isSignedIn();
+      
+      // Only the owner can upload or delete their own images
+      allow write: if isSignedIn() && request.auth.uid == userId;
+      
+      // Limit file size to 10MB
+      allow create: if isSignedIn() && 
+                    request.auth.uid == userId && 
+                    request.resource.size < 10 * 1024 * 1024;
+    }
+
+    // Default deny
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

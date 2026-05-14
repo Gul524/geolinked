@@ -1,10 +1,12 @@
 import 'dart:async';
-
+import 'package:dio/dio.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolinked/configs/providers/user_provider.dart';
+import 'package:geolinked/feature/map/map_state.dart';
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:geoflutterfire_plus/geoflutterfire_plus.dart';
 
 class GeoRadiusInfo {
   const GeoRadiusInfo({required this.centerPoint, required this.radiusMeters});
@@ -34,20 +36,43 @@ class GeoService {
   factory GeoService() => _instance;
 
   StreamSubscription<Position>? _positionSubscription;
+  String? _currentGeoTopic;
 
-  /// Starts listening to location changes and updates Firestore.
-  void startLocationTracking(WidgetRef ref) async {
+  /// Gets the current position of the device.
+  Future<Position?> getCurrentLocation() async {
     bool serviceEnabled;
     LocationPermission permission;
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return;
+    if (!serviceEnabled) return null;
 
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return;
+      if (permission == LocationPermission.denied) return null;
     }
+
+    if (permission == LocationPermission.deniedForever) return null;
+
+    try {
+      // Try to get current position with a timeout
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+          timeLimit: Duration(seconds: 5),
+        ),
+      ).timeout(const Duration(seconds: 6));
+    } catch (e) {
+      debugPrint('Error getting current location: $e. Falling back to last known.');
+      // Fallback to last known position
+      return await Geolocator.getLastKnownPosition();
+    }
+  }
+
+  /// Starts listening to location changes and updates Firestore.
+  void startLocationTracking(WidgetRef ref) async {
+    final Position? position = await getCurrentLocation();
+    if (position == null) return;
 
     _positionSubscription = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
@@ -55,15 +80,39 @@ class GeoService {
         distanceFilter: 100, // Update every 100 meters
       ),
     ).listen((Position position) {
+      // 1. Update user location in Firestore
       ref.read(userProvider.notifier).updateLocation(
         position.latitude,
         position.longitude,
       );
+
+      // 2. Update Geo Topic Subscription (Topic Fallback)
+      _updateGeoTopicSubscription(position.latitude, position.longitude);
     });
+  }
+
+  /// Updates the geohash topic subscription based on current location.
+  /// Precision 4 covers approx 20km x 20km area.
+  /// Precision 5 covers approx 5km x 5km area.
+  void _updateGeoTopicSubscription(double lat, double lng) async {
+    final String newGeohash = GeoFirePoint(GeoPoint(lat, lng)).geohash.substring(0, 5);
+    final String newTopic = 'geo_$newGeohash';
+
+    if (_currentGeoTopic != newTopic) {
+      if (_currentGeoTopic != null) {
+        await NotificationService.instance.unsubscribeFromTopic(_currentGeoTopic!);
+      }
+      await NotificationService.instance.subscribeToTopic(newTopic);
+      _currentGeoTopic = newTopic;
+    }
   }
 
   void stopLocationTracking() {
     _positionSubscription?.cancel();
+    if (_currentGeoTopic != null) {
+      NotificationService.instance.unsubscribeFromTopic(_currentGeoTopic!);
+      _currentGeoTopic = null;
+    }
   }
 
   Future<Placemark?> geopointToPlacemark({required LatLng point}) async {
@@ -101,6 +150,33 @@ class GeoService {
       return locations.isNotEmpty ? locations : null;
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<List<SearchResult>> searchPlaces(String query) async {
+    try {
+      final Response<dynamic> response = await Dio().get<dynamic>(
+        'https://nominatim.openstreetmap.org/search',
+        queryParameters: <String, dynamic>{
+          'q': query,
+          'format': 'json',
+          'limit': 5,
+        },
+        options: Options(
+          headers: <String, String>{'User-Agent': 'GeolinkedApp/1.0'},
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data as List<dynamic>;
+        return data
+            .map((dynamic e) => SearchResult.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      return <SearchResult>[];
+    } catch (e) {
+      debugPrint('Search error: $e');
+      return <SearchResult>[];
     }
   }
 }

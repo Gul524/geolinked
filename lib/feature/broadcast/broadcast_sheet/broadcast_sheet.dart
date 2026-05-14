@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/feature/broadcast/broadcast_sheet/broadcast_sheet_controller.dart';
 
@@ -41,9 +44,7 @@ class _BroadcastSheetState extends ConsumerState<BroadcastSheet> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(broadcastSheetControllerProvider.notifier)
-          .initialize(
+      ref.read(broadcastSheetControllerProvider.notifier).initialize(
             initialTargetLocation: widget.initialTargetLocation,
             initialLocationName: widget.initialTargetLocationName,
           );
@@ -73,7 +74,7 @@ class _BroadcastSheetState extends ConsumerState<BroadcastSheet> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           boxShadow: <BoxShadow>[
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
+              color: Colors.black.withOpacity(0.12),
               blurRadius: 24,
               offset: const Offset(0, -6),
             ),
@@ -90,26 +91,45 @@ class _BroadcastSheetState extends ConsumerState<BroadcastSheet> {
                 children: <Widget>[
                   Center(
                     child: Container(
-                      width: 42,
-                      height: 4,
+                      width: 50,
+                      height: 5,
                       decoration: BoxDecoration(
-                        color: onSurface.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(999),
+                        color: onSurface.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(10),
+                        gradient: LinearGradient(
+                          colors: [
+                            onSurface.withOpacity(0.08),
+                            onSurface.withOpacity(0.15),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text(
-                    'Create Broadcast',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Notify nearby people with timely local updates.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: onSurface.withValues(alpha: 0.65),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Create Broadcast',
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.5,
+                                  ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Notify nearby people with timely local updates.',
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: onSurface.withOpacity(0.55),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -117,13 +137,6 @@ class _BroadcastSheetState extends ConsumerState<BroadcastSheet> {
                     spacing: 8,
                     runSpacing: 8,
                     children: <Widget>[
-                      if (state.targetLocation != null)
-                        CustomChipWidget(
-                          text: state.targetLocation!.compactLabel,
-                          iconData: Icons.my_location_rounded,
-                          type: CustomChipType.success,
-                          onTap: controller.clearTargetLocation,
-                        ),
                       if (state.locationName != null)
                         SizedBox(
                           width: 200,
@@ -140,15 +153,14 @@ class _BroadcastSheetState extends ConsumerState<BroadcastSheet> {
                   Text(
                     'People radius in meters (${state.radiusMeters})',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                          fontWeight: FontWeight.w700,
+                        ),
                   ),
                   Slider(
                     value: state.radiusMeters.toDouble(),
                     min: BroadcastSheetController.minRadiusMeters.toDouble(),
                     max: BroadcastSheetController.maxRadiusMeters.toDouble(),
-                    divisions:
-                        (BroadcastSheetController.maxRadiusMeters -
+                    divisions: (BroadcastSheetController.maxRadiusMeters -
                             BroadcastSheetController.minRadiusMeters) ~/
                         50,
                     label: '${state.radiusMeters}m',
@@ -173,12 +185,19 @@ class _BroadcastSheetState extends ConsumerState<BroadcastSheet> {
                     validator: controller.validateQuestion,
                   ),
                   const SizedBox(height: 16),
+                  _ImagePickerWidget(
+                    image: state.image,
+                    onPick: () => _showImageSourceOptions(context, controller),
+                    onRemove: controller.removeImage,
+                  ),
+                  const SizedBox(height: 20),
                   CustomButtonWidget(
-                    label: 'Post Broadcast',
-                    onPressed: () {
-                      final BroadcastSheetResult? result = controller
-                          .createResult();
-                      if (result == null) {
+                    label: state.isUploading ? 'Uploading Image...' : 'Post Broadcast',
+                    isLoading: state.isUploading,
+                    onPressed: () async {
+                      final BroadcastSheetResult? result =
+                          await controller.createResult();
+                      if (result == null && !state.isUploading) {
                         AppMessaging.showWarning(
                           context,
                           'Please fill all required fields correctly.',
@@ -186,13 +205,140 @@ class _BroadcastSheetState extends ConsumerState<BroadcastSheet> {
                         return;
                       }
 
-                      Navigator.of(context).pop(result);
+                      if (result != null && context.mounted) {
+                        Navigator.of(context).pop(result);
+                      }
                     },
                   ),
                 ],
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showImageSourceOptions(
+    BuildContext context,
+    BroadcastSheetController controller,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take Photo'),
+              onTap: () {
+                Navigator.pop(context);
+                controller.pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choose from Gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                controller.pickImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ImagePickerWidget extends StatelessWidget {
+  const _ImagePickerWidget({
+    required this.image,
+    required this.onPick,
+    required this.onRemove,
+  });
+
+  final File? image;
+  final VoidCallback onPick;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color primary = Theme.of(context).colorScheme.primary;
+    final Color surface = Theme.of(context).colorScheme.surfaceVariant;
+
+    if (image != null) {
+      return Stack(
+        children: <Widget>[
+          Container(
+            height: 160,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              image: DecorationImage(
+                image: FileImage(image!),
+                fit: BoxFit.cover,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: GestureDetector(
+              onTap: onRemove,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return GestureDetector(
+      onTap: onPick,
+      child: Container(
+        height: 80,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: surface.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: primary.withOpacity(0.3),
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Icon(Icons.add_a_photo_rounded, color: primary),
+            const SizedBox(height: 4),
+            Text(
+              'Add Image (Optional)',
+              style: TextStyle(
+                color: primary,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+          ],
         ),
       ),
     );

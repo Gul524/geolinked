@@ -1,24 +1,69 @@
 import 'package:latlong2/latlong.dart';
 
+class SearchResult {
+  const SearchResult({
+    required this.displayName,
+    required this.latitude,
+    required this.longitude,
+  });
+
+  final String displayName;
+  final double latitude;
+  final double longitude;
+
+  factory SearchResult.fromJson(Map<String, dynamic> json) {
+    return SearchResult(
+      displayName: json['display_name'] as String,
+      latitude: double.parse(json['lat'] as String),
+      longitude: double.parse(json['lon'] as String),
+    );
+  }
+}
+
+class MapMarkerData {
+  final String id;
+  final LatLng position;
+  final String type; // 'ask' or 'broadcast'
+  final String? category;
+  
+  const MapMarkerData({
+    required this.id,
+    required this.position,
+    required this.type,
+    this.category,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MapMarkerData &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
+}
+
 class HomeMapState {
   const HomeMapState({
-    required this.targetLocation,
+    this.targetLocation,
     this.targetLocationName,
     this.currentLocation,
-    required this.broadcasts,
-    required this.points,
+    this.communityMarkers = const <MapMarkerData>[],
+    this.points = const <LatLng>[], // Legacy support if needed
     this.cameraTarget,
     this.cameraZoom,
     this.errorMessage,
     this.isLoading = false,
     this.isTargetSlecting = false,
     this.isConfirmingLocation = false,
+    this.searchResults = const <SearchResult>[],
   });
 
   final LatLng? targetLocation;
   final String? targetLocationName;
   final LatLng? currentLocation;
-  final List<LatLng> broadcasts;
+  final List<MapMarkerData> communityMarkers;
   final List<LatLng> points;
   final LatLng? cameraTarget;
   final double? cameraZoom;
@@ -26,13 +71,14 @@ class HomeMapState {
   final String? errorMessage;
   final bool isTargetSlecting;
   final bool isConfirmingLocation;
+  final List<SearchResult> searchResults;
 
   HomeMapState copyWith({
     LatLng? targetLocation,
     bool clearTargetLocation = false,
     LatLng? currentLocation,
     bool clearCurrentLocation = false,
-    List<LatLng>? broadcasts,
+    List<MapMarkerData>? communityMarkers,
     List<LatLng>? points,
     LatLng? cameraTarget,
     bool clearCameraTarget = false,
@@ -44,6 +90,7 @@ class HomeMapState {
     bool? isConfirmingLocation,
     bool clearErrorMessage = false,
     String? targetLocationName,
+    List<SearchResult>? searchResults,
   }) {
     return HomeMapState(
       targetLocation: clearTargetLocation
@@ -52,7 +99,7 @@ class HomeMapState {
       currentLocation: clearCurrentLocation
           ? null
           : (currentLocation ?? this.currentLocation),
-      broadcasts: broadcasts ?? this.broadcasts,
+      communityMarkers: communityMarkers ?? this.communityMarkers,
       points: points ?? this.points,
       cameraTarget: clearCameraTarget
           ? null
@@ -66,7 +113,8 @@ class HomeMapState {
           : (errorMessage ?? this.errorMessage),
       targetLocationName: clearTargetLocation
           ? null
-          : (targetLocationName ?? this.targetLocationName),    
+          : (targetLocationName ?? this.targetLocationName),
+      searchResults: searchResults ?? this.searchResults,
     );
   }
 }

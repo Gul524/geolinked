@@ -1,13 +1,36 @@
 import 'package:geolinked/utils/app_exports.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:geolinked/firebase_options.dart';
+import 'package:geolinked/feature/splash/splash_screen.dart';
+import 'package:geolinked/feature/onboarding/onboarding_screen.dart';
+import 'package:geolinked/feature/auth/login/login_screen.dart';
+import 'package:geolinked/feature/auth/signup/signup_screen.dart';
+import 'package:geolinked/feature/auth/signup/otp_verification_screen.dart';
+import 'package:geolinked/feature/auth/signup/terms_conditions_screen.dart';
+import 'package:geolinked/feature/home/home_screen.dart';
+import 'package:geolinked/services/background_service.dart';
+import 'package:geolinked/feature/profile/privacy_policy_screen.dart';
+import 'package:geolinked/utils/app_navigator.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   await LocalStorageService.instance.init();
-  ApiService.instance.setBaseUrl(AppConstants.apiBaseUrl);
   ApiService.instance.setAuthToken(
     LocalStorageService.instance.get<String>(AppConstants.authTokenKey),
   );
-  // await NotificationService.instance.initialize();
+  
+  // Initialize Notifications
+  await NotificationService.instance.initialize();
+
+  // Initialize Background Service
+  await BackgroundService.initialize();
 
   runApp(const ProviderScope(child: MainApp()));
 }
@@ -21,6 +44,8 @@ class MainApp extends ConsumerWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      navigatorKey: navigatorKey,
+      title: 'GeoLinked',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
@@ -32,6 +57,8 @@ class MainApp extends ConsumerWidget {
         AppRoutes.signup: (_) => const SignupScreen(),
         AppRoutes.otp: (_) => const OtpVerificationScreen(),
         AppRoutes.home: (_) => const HomeScreen(),
+        AppRoutes.terms: (_) => const TermsConditionsScreen(),
+        AppRoutes.privacy: (_) => const PrivacyPolicyScreen(),
       },
     );
   }

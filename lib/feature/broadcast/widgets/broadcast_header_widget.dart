@@ -4,11 +4,13 @@ class BroadcastHeaderWidget extends StatelessWidget {
   const BroadcastHeaderWidget({
     required this.subtitle,
     this.onCreatePressed,
+    this.onBackTap,
     super.key,
   });
 
   final String subtitle;
   final VoidCallback? onCreatePressed;
+  final VoidCallback? onBackTap;
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +21,15 @@ class BroadcastHeaderWidget extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
+              if (onBackTap != null) ...[
+                IconButton(
+                  onPressed: onBackTap,
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+                const SizedBox(width: 12),
+              ],
               Expanded(
                 child: Text(
                   'Nearby Broadcasts',
@@ -27,30 +38,24 @@ class BroadcastHeaderWidget extends StatelessWidget {
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
-              TextButton.icon(
-                onPressed: onCreatePressed,
-                style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.primary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
-                  ),
+              if (onCreatePressed != null)
+                IconButton(
+                  onPressed: onCreatePressed,
+                  icon: const Icon(Icons.add_circle_outline_rounded),
+                  color: Theme.of(context).colorScheme.primary,
                 ),
-                icon: const Icon(Icons.campaign_outlined, size: 18),
-                label: const Text('Broadcast'),
-              ),
             ],
           ),
           const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.58),
+          Padding(
+            padding: EdgeInsets.only(left: onBackTap != null ? 32 : 0),
+            child: Text(
+              subtitle,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withOpacity(0.58),
+              ),
             ),
           ),
         ],
