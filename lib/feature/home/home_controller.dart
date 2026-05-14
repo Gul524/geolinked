@@ -6,7 +6,7 @@ import 'package:geolinked/feature/broadcast/broadcast_sheet/broadcast_sheet.dart
 import 'package:geolinked/feature/broadcast/broadcast_sheet/broadcast_sheet_controller.dart';
 import 'package:geolinked/feature/map/map_controller.dart';
 import 'package:geolinked/utils/app_exports.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 enum HomeTargetAction { ask, broadcast }
 

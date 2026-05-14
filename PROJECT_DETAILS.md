@@ -20,8 +20,8 @@ Main features:
   - **Database**: Cloud Firestore (Real-time data)
   - **Storage**: Firebase Storage (Media uploads)
   - **Messaging**: Firebase Cloud Messaging (FCM)
-- **Maps**: Flutter Map (OpenStreetMap)
-  - **Clustering**: `flutter_map_marker_cluster`
+- **Maps**: Google Maps (`google_maps_flutter`)
+  - **Search**: Google Places API (Custom debounced service)
 - **UX**:
   - **Loading**: `shimmer`
   - **Zoom**: `photo_view`
@@ -47,6 +47,7 @@ Main features:
 - **Empty States**: Guided UI for new users when no local activity is found.
 
 ## 6. Implementation Notes
-- **Clustering**: Map markers are grouped automatically when zoomed out to maintain performance.
+- **Performance**: Asynchronous location fetching and parallel data stream initialization reduce perceived latency on "Ask" and "Broadcast" screens.
+- **Search Debouncing**: 1000ms debounce applied to location searches to minimize API calls and improve responsiveness.
 - **Compatibility**: All UI code uses `withOpacity` instead of `withValues` to ensure compatibility with Flutter 3.10.4+.
 - **Privacy Compliance**: Includes a dedicated `PrivacyPolicyScreen` and a secure account deletion flow.

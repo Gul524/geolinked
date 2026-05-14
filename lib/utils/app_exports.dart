@@ -26,6 +26,7 @@ export '../services/local_storage_service.dart';
 export '../services/api_service.dart';
 export '../services/notification_service.dart';
 export 'package:geolinked/services/geo_service.dart';
+export 'package:geolinked/services/google_places_service.dart';
 
 // shared widgets (Common across all features)
 export '../shared/widgets/app_text_field.dart';

@@ -1,21 +1,24 @@
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class SearchResult {
   const SearchResult({
     required this.displayName,
-    required this.latitude,
-    required this.longitude,
+    this.latitude,
+    this.longitude,
+    this.placeId,
   });
 
   final String displayName;
-  final double latitude;
-  final double longitude;
+  final double? latitude;
+  final double? longitude;
+  final String? placeId;
 
   factory SearchResult.fromJson(Map<String, dynamic> json) {
     return SearchResult(
-      displayName: json['display_name'] as String,
-      latitude: double.parse(json['lat'] as String),
-      longitude: double.parse(json['lon'] as String),
+      displayName: json['display_name'] ?? json['description'] as String,
+      latitude: json['lat'] != null ? double.tryParse(json['lat'].toString()) : null,
+      longitude: json['lon'] != null ? double.tryParse(json['lon'].toString()) : null,
+      placeId: json['place_id'] as String?,
     );
   }
 }

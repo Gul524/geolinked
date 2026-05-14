@@ -23,8 +23,8 @@ The `lib` folder is organized by feature and service following a modular archite
 Each feature contains its own UI (Screens), logic (Controllers), and local components.
 
 #### 📍 lib/feature/map/
-- **map_screen.dart**: The main interactive map interface (Open Street Map).
-- **map_controller.dart**: Reactive logic for rendering nearby Asks and Broadcasts as markers.
+- **map_screen.dart**: The main interactive map interface (Google Maps).
+- **map_controller.dart**: Reactive logic for rendering nearby Asks and Broadcasts as markers and handling searches.
 
 #### ❓ lib/feature/ask/
 - **ask_screen.dart**: List of nearby and personal queries.
@@ -49,6 +49,7 @@ Each feature contains its own UI (Screens), logic (Controllers), and local compo
 - **geo_service.dart**: Manages live GPS tracking, geohash topic subscriptions, and permissions.
 - **notification_service.dart**: Handles Firebase Cloud Messaging (FCM) and local push notifications.
 - **local_storage_service.dart**: Generic Hive wrapper for persistent key-value caching (e.g., user profile, settings).
+- **google_places_service.dart**: Manages Google Places Autocomplete and Details API calls with debouncing.
 
 ### 🔗 lib/utils/
 - **app_exports.dart**: Centralized barrel file for common imports to keep code clean.

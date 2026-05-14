@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolinked/feature/home/home_controller.dart';
 import 'package:geolinked/feature/map/map_controller.dart';
 import 'package:geolinked/feature/map/map_state.dart';
 import 'package:geolinked/utils/app_exports.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 class HomeMapWidget extends ConsumerStatefulWidget {
   const HomeMapWidget({super.key});
@@ -16,7 +15,8 @@ class HomeMapWidget extends ConsumerStatefulWidget {
 
 class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
   static const LatLng _defaultCenter = LatLng(24.8607, 67.0011);
-  final MapController _mapController = MapController();
+  GoogleMapController? _mapController;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -26,46 +26,32 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
     });
   }
 
-  Marker _buildTargetLocationMark(LatLng point) {
-    return Marker(
-      point: point,
-      width: 70,
-      height: 70,
-      child: const _CenterPulseMarker(),
-    );
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
-  Marker _buildCurrentLocationMark(LatLng point) {
-    return Marker(
-      point: point,
-      width: 22,
-      height: 22,
-      child: const _DotMarker(color: Color(0xFF007AFF)),
-    );
-  }
-
-  Marker _buildCommunityMarker(MapMarkerData data) {
-    return Marker(
-      point: data.position,
-      width: 32,
-      height: 32,
-      child: _CustomCategoryMarker(data: data),
-    );
+  void _onMapCreated(GoogleMapController controller) {
+    _mapController = controller;
   }
 
   void _handleCameraRequest(HomeMapState? previous, HomeMapState next) {
-    final LatLng? previousTarget = previous?.cameraTarget;
+    if (_mapController == null) return;
+
     final LatLng? nextTarget = next.cameraTarget;
-    final double? previousZoom = previous?.cameraZoom;
     final double? nextZoom = next.cameraZoom;
 
-    if (nextTarget == null ||
-        (previousTarget == nextTarget && previousZoom == nextZoom)) {
-      return;
-    }
+    if (nextTarget == null) return;
 
-    final double zoom = nextZoom ?? _mapController.camera.zoom;
-    _mapController.move(nextTarget, zoom);
+    _mapController!.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: nextTarget,
+          zoom: nextZoom ?? 15.0,
+        ),
+      ),
+    );
     ref.read(homeMapControllerProvider.notifier).clearCameraRequest();
   }
 
@@ -84,85 +70,52 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
     final Color onSurface = Theme.of(context).colorScheme.onSurface;
     final LatLng initialCenter = state.currentLocation ?? _defaultCenter;
 
-    final List<Marker> communityMarkers = state.communityMarkers
-        .map((data) => _buildCommunityMarker(data))
-        .toList();
+    final Set<Marker> markers = {
+      if (state.currentLocation != null)
+        Marker(
+          markerId: const MarkerId('current_location'),
+          position: state.currentLocation!,
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+          infoWindow: const InfoWindow(title: 'You are here'),
+        ),
+      if (state.targetLocation != null)
+        Marker(
+          markerId: const MarkerId('target_location'),
+          position: state.targetLocation!,
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+        ),
+      ...state.communityMarkers.map((data) {
+        return Marker(
+          markerId: MarkerId(data.id),
+          position: data.position,
+          icon: _getMarkerIcon(data),
+          infoWindow: InfoWindow(
+            title: data.type == 'ask' ? 'Query' : data.category ?? 'Alert',
+          ),
+        );
+      }),
+    };
 
     return SafeArea(
       child: Stack(
         children: <Widget>[
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: initialCenter,
-              initialZoom: 13.5,
-              minZoom: 3,
-              maxZoom: 19,
-              onTap: (_, LatLng point) {
-                if (!state.isTargetSlecting) {
-                  return;
-                }
-                mapController.selectTargetLocation(point);
-              },
+          GoogleMap(
+            onMapCreated: _onMapCreated,
+            initialCameraPosition: CameraPosition(
+              target: initialCenter,
+              zoom: 13.5,
             ),
-            children: <Widget>[
-              TileLayer(
-                urlTemplate:
-                    'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-                subdomains: const <String>['a', 'b', 'c', 'd'],
-                userAgentPackageName: 'com.geolinked.app',
-              ),
-              MarkerClusterLayerWidget(
-                options: MarkerClusterLayerOptions(
-                  maxClusterRadius: 45,
-                  size: const Size(40, 40),
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.all(50),
-                  markers: communityMarkers,
-                  builder: (context, markers) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: Theme.of(context).colorScheme.primary,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          markers.length.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              MarkerLayer(
-                markers: [
-                  if (state.targetLocation != null)
-                    _buildTargetLocationMark(state.targetLocation!),
-                  if (state.currentLocation != null)
-                    _buildCurrentLocationMark(state.currentLocation!),
-                ],
-              ),
-              RichAttributionWidget(
-                attributions: <SourceAttribution>[
-                  TextSourceAttribution(
-                    '© OpenStreetMap contributors',
-                    textStyle: const TextStyle(fontSize: 11),
-                  ),
-                ],
-              ),
-            ],
+            markers: markers,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
+            zoomControlsEnabled: false,
+            mapToolbarEnabled: false,
+            onTap: (LatLng point) {
+              if (!state.isTargetSlecting) return;
+              mapController.selectTargetLocation(point);
+            },
           ),
+
           // Search Bar
           Positioned(
             top: 14,
@@ -197,11 +150,22 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: TextField(
+                            controller: _searchController,
                             onChanged: mapController.searchPlaces,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               hintText: 'Search places...',
                               border: InputBorder.none,
                               isDense: true,
+                              suffixIcon: state.searchResults.isNotEmpty || state.isLoading
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear, size: 18),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        mapController.clearSearchResults();
+                                        FocusScope.of(context).unfocus();
+                                      },
+                                    )
+                                  : null,
                             ),
                             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                   color: onSurface,
@@ -209,11 +173,14 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
                           ),
                         ),
                         if (state.isLoading)
-                          const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
+                          const Padding(
+                            padding: EdgeInsets.only(right: 8.0),
+                            child: SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
                             ),
                           ),
                       ],
@@ -246,6 +213,7 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
                       itemBuilder: (context, index) {
                         final result = state.searchResults[index];
                         return ListTile(
+                          leading: const Icon(Icons.location_on_outlined, size: 20),
                           title: Text(
                             result.displayName,
                             maxLines: 2,
@@ -253,6 +221,7 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
                             style: const TextStyle(fontSize: 14),
                           ),
                           onTap: () {
+                            _searchController.text = result.displayName;
                             mapController.selectSearchResult(result);
                             FocusScope.of(context).unfocus();
                           },
@@ -364,134 +333,25 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
   }
 }
 
-class _CustomCategoryMarker extends StatelessWidget {
-  const _CustomCategoryMarker({required this.data});
-
-  final MapMarkerData data;
-
-  @override
-  Widget build(BuildContext context) {
+  BitmapDescriptor _getMarkerIcon(MapMarkerData data) {
     if (data.type == 'ask') {
-      return _MarkerContainer(
-        color: const Color(0xFF16A34A),
-        icon: Icons.help_outline_rounded,
-      );
+      return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen);
     }
-
-    Color color = const Color(0xFF2563EB);
-    IconData icon = Icons.info_outline_rounded;
 
     switch (data.category) {
       case 'Traffic':
-        color = const Color(0xFFEA580C);
-        icon = Icons.traffic_rounded;
-        break;
+        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange);
       case 'Road Block':
-        color = const Color(0xFFDC2626);
-        icon = Icons.block_flipped;
-        break;
       case 'Safety Alert':
-        color = const Color(0xFFDC2626);
-        icon = Icons.warning_amber_rounded;
-        break;
+        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
       case 'Utility Issue':
-        color = const Color(0xFF854D0E);
-        icon = Icons.build_circle_rounded;
-        break;
+        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRose);
       case 'Market Update':
-        color = const Color(0xFF0D9488);
-        icon = Icons.shopping_bag_rounded;
-        break;
+        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan);
       case 'Public Event':
-        color = const Color(0xFF7C3AED);
-        icon = Icons.event_note_rounded;
-        break;
+        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet);
+      default:
+        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue);
     }
-
-    return _MarkerContainer(color: color, icon: icon);
   }
-}
 
-class _MarkerContainer extends StatelessWidget {
-  const _MarkerContainer({required this.color, required this.icon});
-
-  final Color color;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Icon(
-          icon,
-          color: Colors.white,
-          size: 16,
-        ),
-      ),
-    );
-  }
-}
-
-class _CenterPulseMarker extends StatelessWidget {
-  const _CenterPulseMarker();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 26,
-        height: 26,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: const Color(0xFF007AFF).withOpacity(0.18),
-        ),
-        child: Center(
-          child: Container(
-            width: 12,
-            height: 12,
-            decoration: const BoxDecoration(
-              color: Color(0xFF007AFF),
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DotMarker extends StatelessWidget {
-  const _DotMarker({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 2),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-    );
-  }
-}

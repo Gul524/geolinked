@@ -52,7 +52,11 @@ class FirestoreService {
                   as GeoPoint,
         )
         .map(
-          (docs) => docs.map((doc) => AskModel.fromJson(doc.data()!)).toList(),
+          (docs) => docs
+              .map((doc) => AskModel.fromJson(
+                    <String, dynamic>{...doc.data()!, 'id': doc.id},
+                  ))
+              .toList(),
         );
   }
 
@@ -96,8 +100,11 @@ final GeoFirePoint center = GeoFirePoint(GeoPoint(latitude, longitude));
                   as GeoPoint,
         )
         .map(
-          (docs) =>
-              docs.map((doc) => BroadcastModel.fromJson(doc.data()!)).toList(),
+          (docs) => docs
+              .map((doc) => BroadcastModel.fromJson(
+                    <String, dynamic>{...doc.data()!, 'id': doc.id},
+                  ))
+              .toList(),
         );
   }
 

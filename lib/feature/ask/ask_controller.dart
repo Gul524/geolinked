@@ -67,12 +67,36 @@ class AskController extends Notifier<AskState> {
 
     final userId = FirebaseAuth.instance.currentUser?.uid;
 
-    // Get real location for nearby queries
-    final position = await GeoService().getCurrentLocation();
-    final double lat = position?.latitude ?? 24.8607;
-    final double lng = position?.longitude ?? 67.0011;
+    // Start fetching location in background
+    GeoService().getCurrentLocation().then((position) {
+      if (position != null) {
+        final double lat = position.latitude;
+        final double lng = position.longitude;
 
-    // My Asks listener
+        // Update nearby subscription with real location
+        _nearbySubscription?.cancel();
+        _nearbySubscription = FirestoreService.instance
+            .getNearbyAsks(
+          latitude: lat,
+          longitude: lng,
+          radiusKm: 15,
+        )
+            .listen(
+          (asks) {
+            _loadingTimeout?.cancel();
+            final filteredAsks = asks.where((ask) => ask.userId != userId).toList();
+            state = state.copyWith(nearbyAsks: filteredAsks, isLoading: false);
+          },
+          onError: (error) {
+            _loadingTimeout?.cancel();
+            debugPrint('Nearby asks stream error: $error');
+            state = state.copyWith(isLoading: false);
+          },
+        );
+      }
+    });
+
+    // My Asks listener (does not depend on location)
     if (userId != null) {
       _myAsksSubscription = FirestoreService.instance.asks
           .where('userId', isEqualTo: userId)
@@ -83,7 +107,10 @@ class AskController extends Notifier<AskState> {
           try {
             final asks = snap.docs
                 .map((doc) =>
-                    AskModel.fromJson(doc.data() as Map<String, dynamic>))
+                    AskModel.fromJson(<String, dynamic>{
+                      ...doc.data() as Map<String, dynamic>,
+                      'id': doc.id,
+                    }))
                 .toList();
             state = state.copyWith(myAsks: asks, isLoading: false);
           } catch (e) {
@@ -98,23 +125,20 @@ class AskController extends Notifier<AskState> {
       );
     }
 
-    // Nearby Asks listener (GeoQuery)
+    // Initial load for nearby asks using a default location while waiting for GPS
+    // This reduces perceived latency
     _nearbySubscription = FirestoreService.instance
         .getNearbyAsks(
-      latitude: lat,
-      longitude: lng,
+      latitude: 24.8607,
+      longitude: 67.0011,
       radiusKm: 15,
     )
         .listen(
       (asks) {
-        _loadingTimeout?.cancel();
         final filteredAsks = asks.where((ask) => ask.userId != userId).toList();
-        state = state.copyWith(nearbyAsks: filteredAsks, isLoading: false);
-      },
-      onError: (error) {
-        _loadingTimeout?.cancel();
-        debugPrint('Nearby asks stream error: $error');
-        state = state.copyWith(isLoading: false);
+        if (state.nearbyAsks.isEmpty) {
+          state = state.copyWith(nearbyAsks: filteredAsks, isLoading: false);
+        }
       },
     );
 
@@ -156,7 +180,13 @@ class AskController extends Notifier<AskState> {
   }
 
   Future<void> deleteAsk(String askId) async {
-    await FirestoreService.instance.deleteAsk(askId);
+    try {
+      await FirestoreService.instance.deleteAsk(askId);
+      // Optimistic UI update or wait for stream is handled by Firestore stream
+    } catch (e) {
+      debugPrint('Error deleting ask: $e');
+      rethrow;
+    }
   }
 }
 

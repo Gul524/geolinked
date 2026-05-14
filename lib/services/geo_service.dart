@@ -5,7 +5,7 @@ import 'package:geolinked/configs/providers/user_provider.dart';
 import 'package:geolinked/feature/map/map_state.dart';
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geoflutterfire_plus/geoflutterfire_plus.dart';
 
 class GeoRadiusInfo {
@@ -15,18 +15,22 @@ class GeoRadiusInfo {
   final double radiusMeters;
 
   bool isWithinRadius(LatLng point) {
-    final Distance distance = const Distance();
-    final double distanceInMeters = distance.as(
-      LengthUnit.Meter,
-      centerPoint,
-      point,
+    final double distanceInMeters = Geolocator.distanceBetween(
+      centerPoint.latitude,
+      centerPoint.longitude,
+      point.latitude,
+      point.longitude,
     );
     return distanceInMeters <= radiusMeters;
   }
 
   double getDistanceToPoint(LatLng point) {
-    final Distance distance = const Distance();
-    return distance.as(LengthUnit.Meter, centerPoint, point);
+    return Geolocator.distanceBetween(
+      centerPoint.latitude,
+      centerPoint.longitude,
+      point.latitude,
+      point.longitude,
+    );
   }
 }
 
@@ -153,30 +157,5 @@ class GeoService {
     }
   }
 
-  Future<List<SearchResult>> searchPlaces(String query) async {
-    try {
-      final Response<dynamic> response = await Dio().get<dynamic>(
-        'https://nominatim.openstreetmap.org/search',
-        queryParameters: <String, dynamic>{
-          'q': query,
-          'format': 'json',
-          'limit': 5,
-        },
-        options: Options(
-          headers: <String, String>{'User-Agent': 'GeolinkedApp/1.0'},
-        ),
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data as List<dynamic>;
-        return data
-            .map((dynamic e) => SearchResult.fromJson(e as Map<String, dynamic>))
-            .toList();
-      }
-      return <SearchResult>[];
-    } catch (e) {
-      debugPrint('Search error: $e');
-      return <SearchResult>[];
-    }
-  }
+  // Removed searchPlaces as it is now handled by GooglePlacesService
 }

@@ -1,9 +1,10 @@
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolinked/feature/ask/ask_controller.dart';
 import 'package:geolinked/feature/broadcast/broadcast_controller.dart';
 import 'package:geolinked/feature/map/map_state.dart';
 import 'package:geolinked/utils/app_exports.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:geolinked/services/geo_service.dart';
+import 'package:geolinked/services/google_places_service.dart';
 
 class ConfirmedMapTarget {
   const ConfirmedMapTarget({required this.point, this.locationName});
@@ -90,7 +91,7 @@ class HomeMapController extends Notifier<HomeMapState> {
     }
   }
 
-  Future<void> searchPlaces(String query) async {
+  void searchPlaces(String query) {
     if (query.isEmpty) {
       state = state.copyWith(searchResults: <SearchResult>[]);
       return;
@@ -98,29 +99,31 @@ class HomeMapController extends Notifier<HomeMapState> {
 
     state = state.copyWith(isLoading: true);
     
-    // Add a timeout for the search operation
-    try {
-      final results = await GeoService().searchPlaces(query).timeout(
-        const Duration(seconds: 15),
-        onTimeout: () {
-          debugPrint('Place search timed out');
-          return <SearchResult>[];
-        },
-      );
+    GooglePlacesService.instance.debouncedSearch(query, (results) {
       state = state.copyWith(searchResults: results, isLoading: false);
-    } catch (e) {
-      debugPrint('Search error: $e');
-      state = state.copyWith(searchResults: <SearchResult>[], isLoading: false);
-    }
+    });
   }
 
-  void selectSearchResult(SearchResult result) {
-    final point = LatLng(result.latitude, result.longitude);
-    state = state.copyWith(
-      cameraTarget: point,
-      cameraZoom: 17,
-      searchResults: <SearchResult>[],
-    );
+  Future<void> selectSearchResult(SearchResult result) async {
+    state = state.copyWith(isLoading: true);
+    
+    // Fetch lat/lng if not available (Google Autocomplete returns suggestions without coordinates)
+    final detailedResult = await GooglePlacesService.instance.getPlaceDetails(result);
+    
+    if (detailedResult?.latitude != null && detailedResult?.longitude != null) {
+      final point = LatLng(detailedResult!.latitude!, detailedResult.longitude!);
+      state = state.copyWith(
+        cameraTarget: point,
+        cameraZoom: 17,
+        searchResults: <SearchResult>[],
+        isLoading: false,
+      );
+    } else {
+      state = state.copyWith(
+        searchResults: <SearchResult>[],
+        isLoading: false,
+      );
+    }
   }
 
   void clearSearchResults() {
