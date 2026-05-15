@@ -177,7 +177,12 @@ class _BroadcastDiscussionScreenState
                       ),
                     ),
                   ),
-                  if (state.messages.isEmpty)
+                  if (state.isLoading && state.messages.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(40),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (state.messages.isEmpty)
                     const Padding(
                       padding: EdgeInsets.all(40),
                       child: Center(

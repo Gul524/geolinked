@@ -81,22 +81,41 @@ class AskDiscussionController extends Notifier<AskDiscussionState> {
   }
 
   void _listenToComments(String askId) {
+    state = state.copyWith(isLoading: true);
     _commentsSubscription?.cancel();
-    _commentsSubscription = FirestoreService.instance.getComments('ask', askId).listen((rawComments) {
-      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-      final List<AskDiscussionMessage> messages = rawComments.map((c) {
-        return AskDiscussionMessage(
-          id: c['id'] ?? '',
-          author: c['authorName'] ?? 'Someone',
-          text: c['message'] ?? '',
-          distanceText: '', // Could calculate if distance is stored in comment
-          timeAgo: DateFormat.getDateOrTime(c['createdAt']), // Use timeago package or similar
-          isCurrentUser: c['userId'] == currentUserId,
+    _commentsSubscription = FirestoreService.instance.getComments('ask', askId).listen(
+      (rawComments) {
+        final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+        final List<AskDiscussionMessage> messages = rawComments.map((c) {
+          // Safely handle Timestamp conversion from Firestore
+          DateTime? createdAt;
+          final dynamic rawDate = c['createdAt'];
+          if (rawDate is Timestamp) {
+            createdAt = rawDate.toDate();
+          } else if (rawDate is DateTime) {
+            createdAt = rawDate;
+          }
+
+          return AskDiscussionMessage(
+            id: c['id'] ?? '',
+            author: c['authorName'] ?? 'Someone',
+            text: c['message'] ?? '',
+            distanceText: '',
+            timeAgo: DateFormat.getDateOrTime(createdAt),
+            isCurrentUser: c['userId'] == currentUserId,
+          );
+        }).toList();
+
+        state = state.copyWith(
+          messages: messages.reversed.toList(),
+          isLoading: false,
         );
-      }).toList();
-      
-      state = state.copyWith(messages: messages.reversed.toList());
-    });
+      },
+      onError: (error) {
+        debugPrint('Error listening to comments: $error');
+        state = state.copyWith(isLoading: false);
+      },
+    );
   }
 
   String get locationTitle => 'Nearby User';

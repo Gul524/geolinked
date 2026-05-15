@@ -74,26 +74,45 @@ class BroadcastDiscussionController extends Notifier<BroadcastDiscussionState> {
   }
 
   void _listenToComments(String broadcastId) {
+    state = state.copyWith(isLoading: true);
     _commentsSubscription?.cancel();
     _commentsSubscription = FirestoreService.instance
         .getComments('broadcast', broadcastId)
-        .listen((rawComments) {
-          final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-          final List<BroadcastDiscussionMessage> messages = rawComments.map((
-            c,
-          ) {
-            return BroadcastDiscussionMessage(
-              id: c['id'] ?? '',
-              author: c['authorName'] ?? 'Someone',
-              text: c['message'] ?? '',
-              distanceText: '',
-              timeAgo: DateFormat.getDateOrTime(c['createdAt']),
-              isCurrentUser: c['userId'] == currentUserId,
-            );
-          }).toList();
+        .listen(
+          (rawComments) {
+            final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+            final List<BroadcastDiscussionMessage> messages = rawComments.map((
+              c,
+            ) {
+              // Safely handle Timestamp conversion from Firestore
+              DateTime? createdAt;
+              final dynamic rawDate = c['createdAt'];
+              if (rawDate is Timestamp) {
+                createdAt = rawDate.toDate();
+              } else if (rawDate is DateTime) {
+                createdAt = rawDate;
+              }
 
-          state = state.copyWith(messages: messages.reversed.toList());
-        });
+              return BroadcastDiscussionMessage(
+                id: c['id'] ?? '',
+                author: c['authorName'] ?? 'Someone',
+                text: c['message'] ?? '',
+                distanceText: '',
+                timeAgo: DateFormat.getDateOrTime(createdAt),
+                isCurrentUser: c['userId'] == currentUserId,
+              );
+            }).toList();
+
+            state = state.copyWith(
+              messages: messages.reversed.toList(),
+              isLoading: false,
+            );
+          },
+          onError: (error) {
+            debugPrint('Error listening to comments: $error');
+            state = state.copyWith(isLoading: false);
+          },
+        );
   }
 
   String get locationTitle => 'Broadcast Update';

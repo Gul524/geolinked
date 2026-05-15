@@ -49,6 +49,11 @@ class _AskDiscussionScreenState extends ConsumerState<AskDiscussionScreen> {
                 padding: const EdgeInsets.only(bottom: 8),
                 children: <Widget>[
                   AskQuestionCardWidget(item: widget.item),
+                  if (state.isLoading && state.messages.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(40),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
                   ...state.messages.map(
                     (AskDiscussionMessage message) =>
                         AskMessageBubbleWidget(
