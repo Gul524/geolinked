@@ -88,19 +88,20 @@ class _AskDiscussionScreenState extends ConsumerState<AskDiscussionScreen> {
                           : null,
                     ),
                   ),
-                  AskResolveBannerWidget(
-                    resolved: state.isResolved,
-                    onPressed: controller.markResolved,
-                  ),
+                  // AskResolveBannerWidget(
+                  //   resolved: state.isResolved,
+                  //   onPressed: controller.markResolved,
+                  // ),
+                  
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: AskReplyInputWidget(
+             AskReplyInputWidget(
         controller: controller.replyController,
         onSend: controller.sendReply,
+      ),
+          ],
+        ),
       ),
     );
   }

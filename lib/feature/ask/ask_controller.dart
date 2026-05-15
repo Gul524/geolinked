@@ -35,6 +35,8 @@ class AskController extends Notifier<AskState> {
   StreamSubscription? _nearbySubscription;
   StreamSubscription? _myAsksSubscription;
   Timer? _loadingTimeout;
+  final Set<String> _processedIds = {};
+  bool _isInitialLoadDone = false;
 
   @override
   AskState build() {
@@ -50,8 +52,16 @@ class AskController extends Notifier<AskState> {
     return const AskState();
   }
 
+  void refresh() {
+    state = state.copyWith(isLoading: true);
+    _nearbySubscription?.cancel();
+    _myAsksSubscription?.cancel();
+    _loadingTimeout?.cancel();
+    _initListeners();
+  }
+
   void initialize(BuildContext context) {
-    // Initial data loading is handled by build() and _initListeners()
+    // Already handled by refresh or build
   }
 
   String get subtitle => '${state.allAsks.length} queries active in your area';
@@ -76,23 +86,45 @@ class AskController extends Notifier<AskState> {
         // Update nearby subscription with real location
         _nearbySubscription?.cancel();
         _nearbySubscription = FirestoreService.instance
-            .getNearbyAsks(
-          latitude: lat,
-          longitude: lng,
-          radiusKm: 15,
-        )
+            .getNearbyAsks(latitude: lat, longitude: lng, radiusKm: 15)
             .listen(
-          (asks) {
-            _loadingTimeout?.cancel();
-            final filteredAsks = asks.where((ask) => ask.userId != userId).toList();
-            state = state.copyWith(nearbyAsks: filteredAsks, isLoading: false);
-          },
-          onError: (error) {
-            _loadingTimeout?.cancel();
-            debugPrint('Nearby asks stream error: $error');
-            state = state.copyWith(isLoading: false);
-          },
-        );
+              (asks) {
+                _loadingTimeout?.cancel();
+                final filteredAsks = asks
+                    .where((ask) => ask.userId != userId)
+                    .toList();
+
+                // Check for new items to notify
+                if (_isInitialLoadDone) {
+                  for (final ask in filteredAsks) {
+                    if (!_processedIds.contains(ask.id)) {
+                      NotificationService.instance.showImmediateNotification(
+                        title: 'New Query Nearby!',
+                        body: ask.title,
+                        payload: {'type': 'ask', 'id': ask.id},
+                      );
+                      _processedIds.add(ask.id);
+                    }
+                  }
+                } else {
+                  // Mark initial items as processed
+                  for (final ask in filteredAsks) {
+                    _processedIds.add(ask.id);
+                  }
+                  _isInitialLoadDone = true;
+                }
+
+                state = state.copyWith(
+                  nearbyAsks: filteredAsks,
+                  isLoading: false,
+                );
+              },
+              onError: (error) {
+                _loadingTimeout?.cancel();
+                debugPrint('Nearby asks stream error: $error');
+                state = state.copyWith(isLoading: false);
+              },
+            );
       }
     });
 
@@ -103,45 +135,41 @@ class AskController extends Notifier<AskState> {
           .orderBy('createdAt', descending: true)
           .snapshots()
           .listen(
-        (snap) {
-          try {
-            final asks = snap.docs
-                .map((doc) =>
-                    AskModel.fromJson(<String, dynamic>{
-                      ...doc.data() as Map<String, dynamic>,
-                      'id': doc.id,
-                    }))
-                .toList();
-            state = state.copyWith(myAsks: asks, isLoading: false);
-          } catch (e) {
-            debugPrint('Error parsing my asks: $e');
-            state = state.copyWith(isLoading: false);
-          }
-        },
-        onError: (error) {
-          debugPrint('My asks stream error: $error');
-          state = state.copyWith(isLoading: false);
-        },
-      );
+            (snap) {
+              try {
+                final asks = snap.docs
+                    .map(
+                      (doc) => AskModel.fromJson(<String, dynamic>{
+                        ...doc.data() as Map<String, dynamic>,
+                        'id': doc.id,
+                      }),
+                    )
+                    .toList();
+                state = state.copyWith(myAsks: asks, isLoading: false);
+              } catch (e) {
+                debugPrint('Error parsing my asks: $e');
+                state = state.copyWith(isLoading: false);
+              }
+            },
+            onError: (error) {
+              debugPrint('My asks stream error: $error');
+              state = state.copyWith(isLoading: false);
+            },
+          );
     }
 
     // Initial load for nearby asks using a default location while waiting for GPS
     // This reduces perceived latency
     _nearbySubscription = FirestoreService.instance
-        .getNearbyAsks(
-      latitude: 24.8607,
-      longitude: 67.0011,
-      radiusKm: 15,
-    )
-        .listen(
-      (asks) {
-        final filteredAsks = asks.where((ask) => ask.userId != userId).toList();
-        if (state.nearbyAsks.isEmpty) {
-          state = state.copyWith(nearbyAsks: filteredAsks, isLoading: false);
-        }
-      },
-    );
-
+        .getNearbyAsks(latitude: 24.8607, longitude: 67.0011, radiusKm: 15)
+        .listen((asks) {
+          final filteredAsks = asks
+              .where((ask) => ask.userId != userId)
+              .toList();
+          if (state.nearbyAsks.isEmpty) {
+            state = state.copyWith(nearbyAsks: filteredAsks, isLoading: false);
+          }
+        });
   }
 
   Future<void> createAsk({
@@ -190,5 +218,6 @@ class AskController extends Notifier<AskState> {
   }
 }
 
-final askControllerProvider =
-    NotifierProvider<AskController, AskState>(AskController.new);
+final askControllerProvider = NotifierProvider<AskController, AskState>(
+  AskController.new,
+);

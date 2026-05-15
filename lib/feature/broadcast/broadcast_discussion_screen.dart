@@ -232,7 +232,7 @@ class _BroadcastDiscussionScreenState
             // Reply Input
             Container(
               padding: EdgeInsets.fromLTRB(
-                  16, 12, 16, MediaQuery.of(context).viewInsets.bottom + 12),
+                  16, 12, 16, 12),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
                 boxShadow: [

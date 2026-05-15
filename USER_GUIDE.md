@@ -1,79 +1,128 @@
-# GeoLinked - Comprehensive Feature Guide 🌍
+# GeoLinked: The Official User Guide 🌍
 
-This document provides a detailed breakdown of every feature in GeoLinked, explaining how each screen works and how your interactions affect other users in the community.
-
----
-
-## 📍 Page 1: The Interactive Community Map
-The Map is your central hub for real-time local awareness.
-
-### Features:
-- **Marker Clustering**: When multiple events (Asks or Broadcasts) are close together, they group into a single numbered circle. Zoom in to see individual markers.
-- **Dynamic Search**: Use the top search bar to find specific places. Tapping a result moves the map camera and focuses that area.
-- **"My Location" Button**: Instantly centers the map on your blue dot.
-- **Target Selection Mode**: When starting an Ask or Broadcast, you enter a special mode where tapping the map places a green pulse marker to define the center of your query.
-
-### What happens when...
-- **...you tap a Marker?** The app navigates you to the **Discussion Screen** for that specific post.
-- **...you zoom out?** Markers merge into clusters to keep the interface clean and fast.
+Welcome to **GeoLinked**, your real-time window into the neighborhood. This guide will help you master the app, from navigating the community map to becoming a local hero by helping your neighbors.
 
 ---
 
-## 💬 Page 2: Community Asks (Query Feed)
-The Ask screen is where you seek help from people physically located in a specific area.
-
-### Features:
-- **History List**: A list of all active questions you've asked or that are relevant to your current location.
-- **Skeleton Loading**: Professional shimmers appear while the app fetches the latest queries from the community.
-- **Empty States**: If no one is asking anything nearby, you'll see a friendly screen encouraging you to start the first conversation.
-
-### The "Ask" Flow (User Interaction):
-1. **User A (The Asker)**: Initiates an Ask, selects a 500m radius around a shop on the map, and attaches a photo of the shopfront.
-2. **System**: The app calculates a **Geohash** for that location and stores it in Firestore.
-3. **User B (The Neighbor)**: If User B is within that 500m radius, a notification (FCM) is triggered. The Ask appears in their feed and as a green icon on their map.
-4. **Engagement**: User B taps the notification, views the photo (using pinch-to-zoom), and replies: *"Yes, they just opened!"*
+## 📑 Table of Contents
+1. [Welcome to the Community](#1-welcome-to-the-community)
+2. [The Interactive Live Map](#2-the-interactive-live-map)
+3. [Community Asks: Seeking Help](#3-community-asks-seeking-help)
+4. [Community Broadcasts: Local Alerts](#4-community-broadcasts-local-alerts)
+5. [Discussions & Media](#5-discussions--media)
+6. [Your Profile & Privacy](#6-your-profile--privacy)
+7. [How Notifications Work](#7-how-notifications-work)
+8. [Frequently Asked Questions (FAQ)](#8-frequently-asked-questions-faq)
 
 ---
 
-## 🚨 Page 3: Local Broadcasts (Alert Feed)
-Broadcasts are for sharing information (Traffic, Safety, Events) with a wider audience.
-
-### Features:
-- **Category Icons**: Unique visual markers for different types of alerts (Traffic, Road Blocks, Market Updates, etc.).
-- **Severity Levels**: Alerts are color-coded (Blue for Info, Red for High/Critical) based on their urgency.
-- **Image Thumbnails**: Small previews of attached photos with borders colored by the alert's severity.
-
-### The "Broadcast" Flow (User Interaction):
-1. **User A (The Reporter)**: Spots a road block, selects "Road Block" category, attaches a photo, and sets a 5km broadcast radius.
-2. **User B (The Commuter)**: Sees a **Red Warning Marker** on their map while driving 3km away. 
-3. **Detail View**: User B taps the marker, zooms into the photo to see the exact lane blocked, and hits "Verify" (Verified count increases).
-4. **Verification**: As more neighbors verify, the alert gains credibility in the community.
+## 1. Welcome to the Community
+GeoLinked is built on the principle of **"Hyper-Local Awareness."** Unlike traditional social media, GeoLinked connects you with people based on where they are *now*, allowing for instant, relevant local help and information.
 
 ---
 
-## 📂 Page 4: Profile & Private Data
-This page manages your identity and community settings.
+## 🚀 Core Features at a Glance
+GeoLinked offers a robust set of tools to keep you connected and informed:
 
-### Features:
-- **Community Score**: Tracks your "Helpfulness Score" based on how many of your replies are helpful or how many broadcasts you've verified.
-- **Radius Settings**: Adjust your default "Search Radius." This controls how much of the community's noise you see on your main feed.
-- **Privacy Policy**: A dedicated screen explaining that your location is used only for community matching and is never sold.
-- **Account Deletion**: A secure, "Nuke" option that deletes your Auth record, Firestore profile, and all your media from Firebase Storage.
-
----
-
-## 🖼️ Shared Feature: Pinch-to-Zoom Viewer
-Available on any post with an image (Asks or Broadcasts).
-
-### What happens when...
-- **...you tap an image?** A full-screen black overlay opens.
-- **...you pinch your fingers?** You can zoom in up to 2.5x to see fine details (like a sign on a door or a license plate in a traffic report).
-- **...you swipe down?** The viewer closes smoothly with a Hero animation back to the card.
+- **Interactive Live Map**: Real-time visualization of neighborhood activity with Google Maps integration.
+- **Smart Marker Clustering**: Keeps the map clean by grouping nearby items together automatically.
+- **Geofenced Community Asks**: Ask questions to people physically located in a specific area (500m to 5km).
+- **Categorized Local Broadcasts**: Instant alerts for Traffic, Safety, Events, and Utilities.
+- **Real-Time Notifications**: Instant local alerts the moment a new post is made near you.
+- **Pinch-to-Zoom Media**: View high-detail photos in discussions with intuitive multi-touch gestures.
+- **Community Verification**: Help build trust by verifying local alerts reported by others.
+- **Privacy-First Sync**: Background location updates using secure "Geohashes" to keep you notified without 24/7 tracking.
+- **Secure Data Management**: Adjust your search radius or use the "Nuke" option for total data deletion.
 
 ---
 
-## ⚙️ Background Logic: How you stay "Linked"
-GeoLinked uses **Background Location Sync** to keep you in the loop even when the app is in your pocket.
+## 2. The Interactive Live Map
+The Map is the heart of the GeoLinked experience. It provides a bird's-eye view of everything happening around you.
 
-- **Periodic Sync**: Every 15-20 minutes, the app securely updates your location geohash.
-- **Proximity Alerts**: If a new "Critical" Broadcast is made near your last synced location, the system sends a Push Notification to your device instantly.
+### 📍 Navigating the Map
+- **Blue Dot**: This is you! Your real-time position.
+- **Search Bar**: Use the floating search bar at the top to find specific locations (shops, landmarks, or streets). Tapping a result will smoothly fly the camera to that location.
+- **Marker Clustering**: In busy areas, icons will group together into circles with numbers. Simply tap or zoom in to see the individual posts.
+
+### 🏷️ Understanding Markers
+- **Green Markers (Asks)**: Neighbors seeking information or help.
+- **Themed Markers (Broadcasts)**: Visual icons representing Traffic 🚦, Safety 🚨, Events 🎉, or Utility issues 💧.
+
+---
+
+## 3. Community Asks: Seeking Help
+Got a question about a local shop? Need to know if the park is crowded? Use an **Ask**.
+
+### ✍️ Creating an Ask
+1. Go to the **Ask** tab and tap the **"+"** button.
+2. **Select Location**: Tap on the map to define the center of your query.
+3. **Set Radius**: Choose how far you want your question to travel (e.g., 500m for a shop, 2km for a neighborhood event).
+4. **Details**: Add a title, description, and an optional photo to provide context.
+
+### 🤝 Helping Neighbors
+Browse the "Community" feed to see questions from others. If you have the answer, jump into the discussion! Helping others increases your **Community Helpfulness Score**.
+
+---
+
+## 4. Community Broadcasts: Local Alerts
+Broadcasts are for sharing urgent news, traffic updates, or local events with everyone in the area.
+
+### 📢 Reporting an Incident
+1. Go to the **Broadcast** tab and tap the **"+"** button.
+2. **Category**: Choose from Traffic, Road Blocks, Safety, Utility, or Events.
+3. **Severity**: 
+   - **Info (Blue)**: General updates.
+   - **High/Critical (Red)**: Urgent safety alerts or major delays.
+4. **Verification**: If you see a broadcast that is true, tap the **"Verify"** button. Highly verified alerts are prioritized for other users.
+
+---
+
+## 5. Discussions & Media
+Every Ask and Broadcast has its own dedicated discussion thread.
+
+### 🗨️ Thread Features
+- **Real-Time Chat**: Messages appear instantly.
+- **Image Support**: Tap any image in a thread to open the **Pinch-to-Zoom Viewer**.
+- **Zooming**: Use two fingers to zoom in up to 2.5x to see fine details in photos (like signs, licenses, or damage).
+
+---
+
+## 6. Your Profile & Privacy
+Your privacy is our priority. GeoLinked uses your location only to match you with relevant local content.
+
+### 👤 Profile Management
+- **Helpfulness Score**: Earned by contributing positively to the community.
+- **Settings**: Adjust your default "Search Radius" to filter how much of the city's activity you see.
+- **Secure Deletion**: If you choose to leave, our "Delete Account" feature permanently wipes your Auth record, Firestore data, and all uploaded media.
+
+---
+
+## 7. How Notifications Work
+GeoLinked keeps you informed even when the app is in your pocket.
+
+- **Foreground Notifications**: If you are using the app and a new "High Severity" alert is posted nearby, you will see an instant in-app banner.
+- **Background Sync**: The app periodically updates your location "Geohash" (a secure, encrypted location string).
+- **Proximity Alerts**: If a major incident is reported within your current radius, you will receive a push notification immediately.
+
+---
+
+## 8. Frequently Asked Questions (FAQ)
+
+**Q: Does the app track my exact location 24/7?**
+A: No. We use "Geofencing" and periodic syncs to update your general area (Geohash). We do not store a history of your specific movements.
+
+**Q: Why don't I see any markers on my map?**
+A: You might be in a quiet area. Try increasing your **Search Radius** in the Profile settings, or be the first to start a conversation by posting an Ask!
+
+**Q: Can I edit a post after I've sent it?**
+A: To maintain community trust, posts cannot be edited. However, you can delete your own post and create a new one if details change.
+
+---
+
+### 🛡️ Community Guidelines
+- **Be Truthful**: Only verify alerts you know are real.
+- **Be Kind**: This is a tool for community support. Harassment or spam is strictly prohibited.
+- **Stay Safe**: Do not put yourself in danger to capture a photo for a broadcast.
+
+---
+*Thank you for being part of the GeoLinked community! Together, we make our neighborhoods smarter and safer.*

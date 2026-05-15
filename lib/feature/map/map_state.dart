@@ -61,6 +61,7 @@ class HomeMapState {
     this.isTargetSlecting = false,
     this.isConfirmingLocation = false,
     this.searchResults = const <SearchResult>[],
+    this.markerIcons = const <String, BitmapDescriptor>{},
   });
 
   final LatLng? targetLocation;
@@ -75,6 +76,7 @@ class HomeMapState {
   final bool isTargetSlecting;
   final bool isConfirmingLocation;
   final List<SearchResult> searchResults;
+  final Map<String, BitmapDescriptor> markerIcons;
 
   HomeMapState copyWith({
     LatLng? targetLocation,
@@ -94,6 +96,7 @@ class HomeMapState {
     bool clearErrorMessage = false,
     String? targetLocationName,
     List<SearchResult>? searchResults,
+    Map<String, BitmapDescriptor>? markerIcons,
   }) {
     return HomeMapState(
       targetLocation: clearTargetLocation
@@ -118,6 +121,7 @@ class HomeMapState {
           ? null
           : (targetLocationName ?? this.targetLocationName),
       searchResults: searchResults ?? this.searchResults,
+      markerIcons: markerIcons ?? this.markerIcons,
     );
   }
 }

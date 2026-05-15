@@ -1,5 +1,6 @@
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/model/models.dart';
+import 'package:geolinked/utils/datetime_helper.dart';
 
 class AskHistoryItemWidget extends StatelessWidget {
   const AskHistoryItemWidget({
@@ -52,7 +53,7 @@ class AskHistoryItemWidget extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Just now',
+                         DateFormat.getDateOrTime(item.createdAt),
                         style: Theme.of(context).textTheme.labelMedium
                             ?.copyWith(
                               color: onSurface.withValues(alpha: 0.45),

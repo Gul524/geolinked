@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:geolinked/services/firestore_service.dart';
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/model/models.dart';
+import 'package:geolinked/utils/datetime_helper.dart';
 
 class BroadcastDiscussionMessage {
   const BroadcastDiscussionMessage({
@@ -56,9 +57,7 @@ class BroadcastDiscussionController extends Notifier<BroadcastDiscussionState> {
       _commentsSubscription?.cancel();
     });
 
-    return const BroadcastDiscussionState(
-      messages: [],
-    );
+    return const BroadcastDiscussionState(messages: []);
   }
 
   void initialize(BroadcastModel item) {
@@ -67,30 +66,34 @@ class BroadcastDiscussionController extends Notifier<BroadcastDiscussionState> {
     }
 
     state = state.copyWith(item: item);
-    
+
     // Increment view count
     FirestoreService.instance.incrementViewCount('broadcast', item.id);
-    
+
     _listenToComments(item.id);
   }
 
   void _listenToComments(String broadcastId) {
     _commentsSubscription?.cancel();
-    _commentsSubscription = FirestoreService.instance.getComments('broadcast', broadcastId).listen((rawComments) {
-      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-      final List<BroadcastDiscussionMessage> messages = rawComments.map((c) {
-        return BroadcastDiscussionMessage(
-          id: c['id'] ?? '',
-          author: c['authorName'] ?? 'Someone',
-          text: c['message'] ?? '',
-          distanceText: '',
-          timeAgo: 'Just now',
-          isCurrentUser: c['userId'] == currentUserId,
-        );
-      }).toList();
-      
-      state = state.copyWith(messages: messages.reversed.toList());
-    });
+    _commentsSubscription = FirestoreService.instance
+        .getComments('broadcast', broadcastId)
+        .listen((rawComments) {
+          final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+          final List<BroadcastDiscussionMessage> messages = rawComments.map((
+            c,
+          ) {
+            return BroadcastDiscussionMessage(
+              id: c['id'] ?? '',
+              author: c['authorName'] ?? 'Someone',
+              text: c['message'] ?? '',
+              distanceText: '',
+              timeAgo: DateFormat.getDateOrTime(c['createdAt']),
+              isCurrentUser: c['userId'] == currentUserId,
+            );
+          }).toList();
+
+          state = state.copyWith(messages: messages.reversed.toList());
+        });
   }
 
   String get locationTitle => 'Broadcast Update';
@@ -109,10 +112,11 @@ class BroadcastDiscussionController extends Notifier<BroadcastDiscussionState> {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
 
-    final authorName = FirebaseAuth.instance.currentUser?.displayName ?? 'Anonymous';
+    final authorName =
+        FirebaseAuth.instance.currentUser?.displayName ?? 'Anonymous';
 
     replyController.clear();
-    
+
     await FirestoreService.instance.addComment('broadcast', state.item!.id, {
       'userId': userId,
       'message': text,
@@ -122,8 +126,11 @@ class BroadcastDiscussionController extends Notifier<BroadcastDiscussionState> {
 
   Future<void> deleteComment(String commentId) async {
     if (state.item == null) return;
-    await FirestoreService.instance
-        .deleteComment('broadcast', state.item!.id, commentId);
+    await FirestoreService.instance.deleteComment(
+      'broadcast',
+      state.item!.id,
+      commentId,
+    );
   }
 }
 

@@ -71,13 +71,13 @@ class AskMessageBubbleWidget extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            Wrap(
-              spacing: 8,
-              children: <Widget>[
-                _VoteChip(label: '✓ Correct', color: const Color(0xFF16A34A)),
-                _VoteChip(label: '✗ Incorrect', color: const Color(0xFFEF4444)),
-              ],
-            ),
+            // Wrap(
+            //   spacing: 8,
+            //   children: <Widget>[
+            //     _VoteChip(label: '✓ Correct', color: const Color(0xFF16A34A)),
+            //     _VoteChip(label: '✗ Incorrect', color: const Color(0xFFEF4444)),
+            //   ],
+            // ),
           ],
           if (self)
             Padding(

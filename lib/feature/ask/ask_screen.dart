@@ -2,7 +2,6 @@ import 'package:geolinked/feature/ask/ask_discussion_screen.dart';
 import 'package:geolinked/model/models.dart';
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/feature/ask/ask_controller.dart';
-import 'package:geolinked/feature/ask/ask_sheet/ask_sheet.dart';
 import 'package:geolinked/feature/ask/widgets/ask_history_header_widget.dart';
 import 'package:geolinked/feature/ask/widgets/ask_history_item_widget.dart';
 import 'package:geolinked/shared/widgets/shimmer_loading_widget.dart';
@@ -20,7 +19,7 @@ class _AskScreenState extends ConsumerState<AskScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(askControllerProvider.notifier).initialize(context);
+      ref.read(askControllerProvider.notifier).refresh();
     });
   }
 

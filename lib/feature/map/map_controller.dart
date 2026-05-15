@@ -4,7 +4,9 @@ import 'package:geolinked/feature/broadcast/broadcast_controller.dart';
 import 'package:geolinked/feature/map/map_state.dart';
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/services/geo_service.dart';
-import 'package:geolinked/services/google_places_service.dart';
+import 'package:geolinked/services/location_search_service.dart';
+import 'package:geolinked/utils/marker_utils.dart';
+import 'package:flutter/material.dart';
 
 class ConfirmedMapTarget {
   const ConfirmedMapTarget({required this.point, this.locationName});
@@ -38,22 +40,26 @@ class HomeMapController extends Notifier<HomeMapState> {
 
     for (final ask in asks) {
       if (ask.latitude != null && ask.longitude != null) {
-        markers.add(MapMarkerData(
-          id: 'ask_${ask.id}',
-          position: LatLng(ask.latitude!, ask.longitude!),
-          type: 'ask',
-        ));
+        markers.add(
+          MapMarkerData(
+            id: 'ask_${ask.id}',
+            position: LatLng(ask.latitude!, ask.longitude!),
+            type: 'ask',
+          ),
+        );
       }
     }
 
     for (final broadcast in broadcasts) {
       if (broadcast.latitude != null && broadcast.longitude != null) {
-        markers.add(MapMarkerData(
-          id: 'broadcast_${broadcast.id}',
-          position: LatLng(broadcast.latitude!, broadcast.longitude!),
-          type: 'broadcast',
-          category: broadcast.category,
-        ));
+        markers.add(
+          MapMarkerData(
+            id: 'broadcast_${broadcast.id}',
+            position: LatLng(broadcast.latitude!, broadcast.longitude!),
+            type: 'broadcast',
+            category: broadcast.category,
+          ),
+        );
       }
     }
 
@@ -61,6 +67,8 @@ class HomeMapController extends Notifier<HomeMapState> {
   }
 
   Future<void> initialize() async {
+    await _generateMarkerIcons();
+
     final position = await GeoService().getCurrentLocation();
     if (position != null) {
       final point = LatLng(position.latitude, position.longitude);
@@ -74,10 +82,10 @@ class HomeMapController extends Notifier<HomeMapState> {
       state = state.copyWith(
         targetLocation: _defaultTargetLocation,
         cameraTarget: _defaultTargetLocation,
-        cameraZoom: 13,
+        cameraZoom: 15,
       );
     }
-    
+
     // Initial marker sync
     _updateCommunityMarkers();
   }
@@ -86,32 +94,36 @@ class HomeMapController extends Notifier<HomeMapState> {
     if (state.currentLocation != null) {
       state = state.copyWith(
         cameraTarget: state.currentLocation,
-        cameraZoom: 16,
+        cameraZoom: 17,
       );
     }
   }
 
-  void searchPlaces(String query) {
+  void searchPlaces(String query) async {
     if (query.isEmpty) {
       state = state.copyWith(searchResults: <SearchResult>[]);
       return;
     }
 
     state = state.copyWith(isLoading: true);
-    
-    GooglePlacesService.instance.debouncedSearch(query, (results) {
-      state = state.copyWith(searchResults: results, isLoading: false);
-    });
+
+    final results = await LocationSearchService.instance.search(query);
+    state = state.copyWith(searchResults: results, isLoading: false);
   }
 
   Future<void> selectSearchResult(SearchResult result) async {
     state = state.copyWith(isLoading: true);
-    
-    // Fetch lat/lng if not available (Google Autocomplete returns suggestions without coordinates)
-    final detailedResult = await GooglePlacesService.instance.getPlaceDetails(result);
-    
+
+    // Fetch lat/lng if not available
+    final detailedResult = await LocationSearchService.instance.getPlaceDetails(
+      result,
+    );
+
     if (detailedResult?.latitude != null && detailedResult?.longitude != null) {
-      final point = LatLng(detailedResult!.latitude!, detailedResult.longitude!);
+      final point = LatLng(
+        detailedResult!.latitude!,
+        detailedResult.longitude!,
+      );
       state = state.copyWith(
         cameraTarget: point,
         cameraZoom: 17,
@@ -119,10 +131,7 @@ class HomeMapController extends Notifier<HomeMapState> {
         isLoading: false,
       );
     } else {
-      state = state.copyWith(
-        searchResults: <SearchResult>[],
-        isLoading: false,
-      );
+      state = state.copyWith(searchResults: <SearchResult>[], isLoading: false);
     }
   }
 
@@ -144,7 +153,7 @@ class HomeMapController extends Notifier<HomeMapState> {
       isTargetSlecting: false,
       isConfirmingLocation: true,
       cameraTarget: value,
-      cameraZoom: 20,
+      cameraZoom: 18,
     );
   }
 
@@ -201,6 +210,44 @@ class HomeMapController extends Notifier<HomeMapState> {
     state = value == null
         ? state.copyWith(clearCurrentLocation: true)
         : state.copyWith(currentLocation: value);
+  }
+
+  Future<void> _generateMarkerIcons() async {
+    final Map<String, BitmapDescriptor> icons = {};
+
+    // Ask icon
+    icons['ask'] = await MarkerUtils.createCustomMarkerBitmap(
+      Icons.help_outline_rounded,
+      color: Colors.teal,
+    );
+
+    // Broadcast icons
+    icons['Traffic'] = await MarkerUtils.createCustomMarkerBitmap(
+      Icons.traffic_rounded,
+      color: Colors.orange,
+    );
+    icons['Road Block'] = await MarkerUtils.createCustomMarkerBitmap(
+      Icons.block_rounded,
+      color: Colors.red,
+    );
+    icons['Safety Alert'] = await MarkerUtils.createCustomMarkerBitmap(
+      Icons.warning_amber_rounded,
+      color: Colors.redAccent,
+    );
+    icons['Utility Issue'] = await MarkerUtils.createCustomMarkerBitmap(
+      Icons.build_rounded,
+      color: Colors.blueGrey,
+    );
+    icons['Market Update'] = await MarkerUtils.createCustomMarkerBitmap(
+      Icons.shopping_bag_rounded,
+      color: Colors.indigo,
+    );
+    icons['Public Event'] = await MarkerUtils.createCustomMarkerBitmap(
+      Icons.event_available_rounded,
+      color: Colors.purple,
+    );
+
+    state = state.copyWith(markerIcons: icons);
   }
 }
 

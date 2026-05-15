@@ -140,8 +140,8 @@ class _AskSheetState extends ConsumerState<AskSheet> {
                         type: CustomChipType.info,
                       ),
                       if (state.locationName != null)
-                        SizedBox(
-                          width: 200,
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 300),
                           child: CustomChipWidget(
                             text: state.locationName!,
                             iconData: Icons.location_on_rounded,
@@ -185,31 +185,31 @@ class _AskSheetState extends ConsumerState<AskSheet> {
                     validator: controller.validateQuestion,
                   ),
                   const SizedBox(height: 16),
-                  _ImagePickerWidget(
-                    image: state.image,
-                    onPick: () => _showImageSourceOptions(context, controller),
-                    onRemove: controller.removeImage,
-                  ),
-                  const SizedBox(height: 20),
-                  CustomButtonWidget(
-                    label: state.isUploading ? 'Uploading Image...' : 'Ask Nearby',
-                    isLoading: state.isUploading,
-                    onPressed: () async {
-                      final AskSheetResult? result =
-                          await controller.createResult();
-                      if (result == null && !state.isUploading) {
-                        AppMessaging.showWarning(
-                          context,
-                          'Please fill all required fields correctly.',
-                        );
-                        return;
-                      }
+                  // _ImagePickerWidget(
+                  //   image: state.image,
+                  //   onPick: () => _showImageSourceOptions(context, controller),
+                  //   onRemove: controller.removeImage,
+                  // ),
+                  // const SizedBox(height: 20),
+                  // CustomButtonWidget(
+                  //   label: state.isUploading ? 'Uploading Image...' : 'Ask Nearby',
+                  //   isLoading: state.isUploading,
+                  //   onPressed: () async {
+                  //     final AskSheetResult? result =
+                  //         await controller.createResult();
+                  //     if (result == null && !state.isUploading) {
+                  //       AppMessaging.showWarning(
+                  //         context,
+                  //         'Please fill all required fields correctly.',
+                  //       );
+                  //       return;
+                  //     }
 
-                      if (result != null && context.mounted) {
-                        Navigator.of(context).pop(result);
-                      }
-                    },
-                  ),
+                  //     if (result != null && context.mounted) {
+                  //       Navigator.of(context).pop(result);
+                  //     }
+                  //   },
+                  // ),
                 ],
               ),
             ),

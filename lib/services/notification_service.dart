@@ -105,7 +105,16 @@ class NotificationService {
       macOS: iosSettings,
     );
 
-    await _localNotifications.initialize(settings);
+    await _localNotifications.initialize(
+      settings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        if (response.payload != null) {
+          final Map<String, String> data =
+              Uri.splitQueryString(response.payload!);
+          _handleLocalNotificationClick(data);
+        }
+      },
+    );
 
     await _localNotifications
         .resolvePlatformSpecificImplementation<
@@ -154,6 +163,21 @@ class NotificationService {
     });
   }
 
+  void _handleLocalNotificationClick(Map<String, String> data) {
+    final String? type = data['type'];
+    final String? id = data['id'];
+
+    if (id == null || type == null || navigatorKey.currentState == null) {
+      return;
+    }
+
+    if (type == 'ask') {
+      _navigateToAsk(id);
+    } else if (type == 'broadcast') {
+      _navigateToBroadcast(id);
+    }
+  }
+
   Future<void> _handleInitialMessage() async {
     final RemoteMessage? initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
@@ -197,6 +221,29 @@ class NotificationService {
         MaterialPageRoute(builder: (_) => BroadcastDiscussionScreen(item: model)),
       );
     }
+  }
+
+  Future<void> showImmediateNotification({
+    required String title,
+    required String body,
+    Map<String, String>? payload,
+  }) async {
+    await _localNotifications.show(
+      DateTime.now().millisecond,
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _androidChannel.id,
+          _androidChannel.name,
+          channelDescription: _androidChannel.description,
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+        iOS: const DarwinNotificationDetails(),
+      ),
+      payload: payload != null ? Uri(queryParameters: payload).query : null,
+    );
   }
 
   Future<void> subscribeToTopic(String topic) async {

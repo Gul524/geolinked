@@ -1,6 +1,7 @@
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/model/models.dart';
 import 'package:geolinked/shared/widgets/full_screen_viewer.dart';
+import 'package:geolinked/utils/datetime_helper.dart';
 
 class BroadcastListItemWidget extends StatelessWidget {
   const BroadcastListItemWidget({
@@ -17,7 +18,7 @@ class BroadcastListItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color onSurface = Theme.of(context).colorScheme.onSurface;
-    
+
     // Severity Color logic
     final Color severityColor = switch (item.severity) {
       BroadcastSeverity.info => Colors.blue,
@@ -71,11 +72,9 @@ class BroadcastListItemWidget extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Just now',
+                        DateFormat.getDateOrTime(item.createdAt),
                         style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(
-                              color: onSurface.withOpacity(0.42),
-                            ),
+                            ?.copyWith(color: onSurface.withOpacity(0.42)),
                       ),
                       if (onDelete != null)
                         PopupMenuButton<int>(
@@ -116,8 +115,6 @@ class BroadcastListItemWidget extends StatelessWidget {
                           runSpacing: 6,
                           children: <Widget>[
                             _MetaPill(label: '👁️ ${item.seenCount}'),
-                            if (item.latitude != null)
-                              _MetaPill(label: '📍 Nearby'),
                             _MetaPill(label: '✅ ${item.verifiedCount}'),
                           ],
                         ),

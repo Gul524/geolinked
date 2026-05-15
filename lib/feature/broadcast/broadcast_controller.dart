@@ -34,6 +34,8 @@ class BroadcastController extends Notifier<BroadcastState> {
   StreamSubscription? _nearbySubscription;
   StreamSubscription? _myBroadcastsSubscription;
   Timer? _loadingTimeout;
+  final Set<String> _processedIds = {};
+  bool _isInitialLoadDone = false;
 
   @override
   BroadcastState build() {
@@ -48,8 +50,16 @@ class BroadcastController extends Notifier<BroadcastState> {
     return const BroadcastState();
   }
 
+  void refresh() {
+    state = state.copyWith(isLoading: true);
+    _nearbySubscription?.cancel();
+    _myBroadcastsSubscription?.cancel();
+    _loadingTimeout?.cancel();
+    _initListeners();
+  }
+
   void initialize(BuildContext context) {
-    // Initialization logic if needed
+    // Already handled by refresh or build
   }
 
   String get subtitle => '${state.allBroadcasts.length} alerts active in your area';
@@ -83,6 +93,27 @@ class BroadcastController extends Notifier<BroadcastState> {
           (items) {
             _loadingTimeout?.cancel();
             final filtered = items.where((item) => item.authorId != userId).toList();
+            
+            // Check for new items to notify
+            if (_isInitialLoadDone) {
+              for (final item in filtered) {
+                if (!_processedIds.contains(item.id)) {
+                  NotificationService.instance.showImmediateNotification(
+                    title: 'Community Alert!',
+                    body: '${item.category}: ${item.message}',
+                    payload: {'type': 'broadcast', 'id': item.id},
+                  );
+                  _processedIds.add(item.id);
+                }
+              }
+            } else {
+              // Mark initial items as processed
+              for (final item in filtered) {
+                _processedIds.add(item.id);
+              }
+              _isInitialLoadDone = true;
+            }
+
             state = state.copyWith(nearbyBroadcasts: filtered, isLoading: false);
           },
           onError: (error) {

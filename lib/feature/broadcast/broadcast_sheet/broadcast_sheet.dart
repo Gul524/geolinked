@@ -138,8 +138,8 @@ class _BroadcastSheetState extends ConsumerState<BroadcastSheet> {
                     runSpacing: 8,
                     children: <Widget>[
                       if (state.locationName != null)
-                        SizedBox(
-                          width: 200,
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 300),
                           child: CustomChipWidget(
                             text: state.locationName!,
                             iconData: Icons.location_on_rounded,

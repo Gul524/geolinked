@@ -46,10 +46,7 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
 
     _mapController!.animateCamera(
       CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: nextTarget,
-          zoom: nextZoom ?? 15.0,
-        ),
+        CameraPosition(target: nextTarget, zoom: nextZoom ?? 15.0),
       ),
     );
     ref.read(homeMapControllerProvider.notifier).clearCameraRequest();
@@ -75,20 +72,22 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
         Marker(
           markerId: const MarkerId('current_location'),
           position: state.currentLocation!,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueAzure,
+          ),
           infoWindow: const InfoWindow(title: 'You are here'),
         ),
       if (state.targetLocation != null)
         Marker(
           markerId: const MarkerId('target_location'),
           position: state.targetLocation!,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
         ),
       ...state.communityMarkers.map((data) {
         return Marker(
           markerId: MarkerId(data.id),
           position: data.position,
-          icon: _getMarkerIcon(data),
+          icon: _getMarkerIcon(data, state.markerIcons),
           infoWindow: InfoWindow(
             title: data.type == 'ask' ? 'Query' : data.category ?? 'Alert',
           ),
@@ -118,7 +117,7 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
 
           // Search Bar
           Positioned(
-            top: 14,
+            top: 28,
             left: 14,
             right: 14,
             child: Column(
@@ -155,8 +154,9 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
                             decoration: InputDecoration(
                               hintText: 'Search places...',
                               border: InputBorder.none,
-                              isDense: true,
-                              suffixIcon: state.searchResults.isNotEmpty || state.isLoading
+                              suffixIcon:
+                                  state.searchResults.isNotEmpty ||
+                                      state.isLoading
                                   ? IconButton(
                                       icon: const Icon(Icons.clear, size: 18),
                                       onPressed: () {
@@ -167,9 +167,9 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
                                     )
                                   : null,
                             ),
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  color: onSurface,
-                                ),
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyLarge?.copyWith(color: onSurface),
                           ),
                         ),
                         if (state.isLoading)
@@ -178,9 +178,7 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
                             child: SizedBox(
                               width: 14,
                               height: 14,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             ),
                           ),
                       ],
@@ -213,7 +211,10 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
                       itemBuilder: (context, index) {
                         final result = state.searchResults[index];
                         return ListTile(
-                          leading: const Icon(Icons.location_on_outlined, size: 20),
+                          leading: const Icon(
+                            Icons.location_on_outlined,
+                            size: 20,
+                          ),
                           title: Text(
                             result.displayName,
                             maxLines: 2,
@@ -331,27 +332,21 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
       ),
     );
   }
-}
 
-  BitmapDescriptor _getMarkerIcon(MapMarkerData data) {
+  BitmapDescriptor _getMarkerIcon(
+    MapMarkerData data,
+    Map<String, BitmapDescriptor> icons,
+  ) {
     if (data.type == 'ask') {
-      return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen);
+      return icons['ask'] ??
+          BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen);
     }
 
-    switch (data.category) {
-      case 'Traffic':
-        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange);
-      case 'Road Block':
-      case 'Safety Alert':
-        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
-      case 'Utility Issue':
-        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRose);
-      case 'Market Update':
-        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan);
-      case 'Public Event':
-        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet);
-      default:
-        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue);
+    final String? category = data.category;
+    if (category != null && icons.containsKey(category)) {
+      return icons[category]!;
     }
+
+    return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue);
   }
-
+}

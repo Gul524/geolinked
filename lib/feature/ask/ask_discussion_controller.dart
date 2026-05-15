@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:geolinked/services/firestore_service.dart';
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/model/models.dart';
+import 'package:geolinked/utils/datetime_helper.dart';
 
 class AskDiscussionMessage {
   const AskDiscussionMessage({
@@ -89,7 +90,7 @@ class AskDiscussionController extends Notifier<AskDiscussionState> {
           author: c['authorName'] ?? 'Someone',
           text: c['message'] ?? '',
           distanceText: '', // Could calculate if distance is stored in comment
-          timeAgo: 'Just now', // Use timeago package or similar
+          timeAgo: DateFormat.getDateOrTime(c['createdAt']), // Use timeago package or similar
           isCurrentUser: c['userId'] == currentUserId,
         );
       }).toList();

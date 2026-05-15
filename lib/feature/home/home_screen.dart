@@ -1,3 +1,5 @@
+import 'package:geolinked/feature/ask/ask_controller.dart';
+import 'package:geolinked/feature/broadcast/broadcast_controller.dart';
 import 'package:geolinked/feature/broadcast/broadcast_screen.dart';
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/feature/home/home_controller.dart';
@@ -6,7 +8,6 @@ import 'package:geolinked/feature/map/map_widget.dart';
 import 'package:geolinked/feature/ask/ask_screen.dart';
 import 'package:geolinked/feature/profile/profile_screen.dart';
 import 'package:geolinked/feature/notifications/notification_controller.dart';
-import 'package:geolinked/shared/widgets/app_messaging.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -67,10 +68,10 @@ class HomeScreen extends ConsumerWidget {
           controller.setCurrentIndex(index);
           if (index == 1) {
             ref.read(notificationControllerProvider.notifier).markAsksRead();
+            ref.read(askControllerProvider.notifier).refresh();
           } else if (index == 2) {
-            ref
-                .read(notificationControllerProvider.notifier)
-                .markBroadcastsRead();
+            ref.read(notificationControllerProvider.notifier).markBroadcastsRead();
+            ref.read(broadcastControllerProvider.notifier).refresh();
           }
         },
       ),

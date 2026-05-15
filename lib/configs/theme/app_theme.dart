@@ -67,14 +67,25 @@ class AppTheme {
 
   static ThemeData get darkTheme {
     return _buildTheme(
-      brightness: Brightness.dark,
-      primary: _darkPrimary,
-      secondary: _darkSecondary,
-      surface: _darkSurface,
-      onSurface: _darkOnSurface,
-      card: _darkCard,
+      brightness: Brightness.light,
+      primary: _lightPrimary,
+      secondary: _lightSecondary,
+      surface: _lightSurface,
+      onSurface: _lightOnSurface,
+      card: _lightCard,
     );
   }
+
+  // static ThemeData get darkTheme {
+  //   return _buildTheme(
+  //     brightness: Brightness.dark,
+  //     primary: _darkPrimary,
+  //     secondary: _darkSecondary,
+  //     surface: _darkSurface,
+  //     onSurface: _darkOnSurface,
+  //     card: _darkCard,
+  //   );
+  // }
 
   static ThemeData _buildTheme({
     required Brightness brightness,

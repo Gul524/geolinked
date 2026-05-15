@@ -20,7 +20,7 @@ class _BroadcastScreenState extends ConsumerState<BroadcastScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(broadcastControllerProvider.notifier).initialize(context);
+      ref.read(broadcastControllerProvider.notifier).refresh();
     });
   }
 
