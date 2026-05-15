@@ -4,7 +4,7 @@ import 'package:geolinked/feature/broadcast/broadcast_controller.dart';
 import 'package:geolinked/feature/map/map_state.dart';
 import 'package:geolinked/utils/app_exports.dart';
 import 'package:geolinked/services/geo_service.dart';
-import 'package:geolinked/services/location_search_service.dart';
+import 'package:geolinked/services/google_places_service.dart';
 import 'package:geolinked/utils/marker_utils.dart';
 import 'package:flutter/material.dart';
 
@@ -99,7 +99,7 @@ class HomeMapController extends Notifier<HomeMapState> {
     }
   }
 
-  void searchPlaces(String query) async {
+  void searchPlaces(String query) {
     if (query.isEmpty) {
       state = state.copyWith(searchResults: <SearchResult>[]);
       return;
@@ -107,15 +107,16 @@ class HomeMapController extends Notifier<HomeMapState> {
 
     state = state.copyWith(isLoading: true);
 
-    final results = await LocationSearchService.instance.search(query);
-    state = state.copyWith(searchResults: results, isLoading: false);
+    GooglePlacesService.instance.searchWithDebounce(query, (results) {
+      state = state.copyWith(searchResults: results, isLoading: false);
+    });
   }
 
   Future<void> selectSearchResult(SearchResult result) async {
     state = state.copyWith(isLoading: true);
 
     // Fetch lat/lng if not available
-    final detailedResult = await LocationSearchService.instance.getPlaceDetails(
+    final detailedResult = await GooglePlacesService.instance.getPlaceDetails(
       result,
     );
 
@@ -126,7 +127,7 @@ class HomeMapController extends Notifier<HomeMapState> {
       );
       state = state.copyWith(
         cameraTarget: point,
-        cameraZoom: 17,
+        cameraZoom: 15,
         searchResults: <SearchResult>[],
         isLoading: false,
       );

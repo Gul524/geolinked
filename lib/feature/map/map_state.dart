@@ -3,19 +3,33 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 class SearchResult {
   const SearchResult({
     required this.displayName,
+    this.secondaryText,
     this.latitude,
     this.longitude,
     this.placeId,
   });
 
   final String displayName;
+  final String? secondaryText;
   final double? latitude;
   final double? longitude;
   final String? placeId;
 
   factory SearchResult.fromJson(Map<String, dynamic> json) {
+    // Check if it's the New Places API format
+    if (json.containsKey('placePrediction')) {
+      final prediction = json['placePrediction'];
+      final structured = prediction['structuredFormat'];
+      return SearchResult(
+        displayName: structured?['mainText']?['text'] ?? prediction['text']?['text'] ?? '',
+        secondaryText: structured?['secondaryText']?['text'],
+        placeId: prediction['placeId'] ?? (prediction['place'] as String).replaceFirst('places/', ''),
+      );
+    }
+    
+    // Legacy support for Nominatim or Old Places API
     return SearchResult(
-      displayName: json['display_name'] ?? json['description'] as String,
+      displayName: json['display_name'] ?? json['description'] ?? '',
       latitude: json['lat'] != null ? double.tryParse(json['lat'].toString()) : null,
       longitude: json['lon'] != null ? double.tryParse(json['lon'].toString()) : null,
       placeId: json['place_id'] as String?,

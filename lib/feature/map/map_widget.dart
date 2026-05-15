@@ -211,16 +211,39 @@ class _HomeMapWidgetState extends ConsumerState<HomeMapWidget> {
                       itemBuilder: (context, index) {
                         final result = state.searchResults[index];
                         return ListTile(
-                          leading: const Icon(
-                            Icons.location_on_outlined,
-                            size: 20,
+                          dense: true,
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF007AFF).withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.location_on_rounded,
+                              size: 18,
+                              color: Color(0xFF007AFF),
+                            ),
                           ),
                           title: Text(
                             result.displayName,
-                            maxLines: 2,
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 14),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
+                          subtitle: result.secondaryText != null
+                              ? Text(
+                                  result.secondaryText!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: onSurface.withOpacity(0.6),
+                                  ),
+                                )
+                              : null,
                           onTap: () {
                             _searchController.text = result.displayName;
                             mapController.selectSearchResult(result);

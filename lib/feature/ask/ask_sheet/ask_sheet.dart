@@ -191,25 +191,25 @@ class _AskSheetState extends ConsumerState<AskSheet> {
                   //   onRemove: controller.removeImage,
                   // ),
                   // const SizedBox(height: 20),
-                  // CustomButtonWidget(
-                  //   label: state.isUploading ? 'Uploading Image...' : 'Ask Nearby',
-                  //   isLoading: state.isUploading,
-                  //   onPressed: () async {
-                  //     final AskSheetResult? result =
-                  //         await controller.createResult();
-                  //     if (result == null && !state.isUploading) {
-                  //       AppMessaging.showWarning(
-                  //         context,
-                  //         'Please fill all required fields correctly.',
-                  //       );
-                  //       return;
-                  //     }
+                  CustomButtonWidget(
+                    label: state.isUploading ? 'Uploading Image...' : 'Ask Nearby',
+                    isLoading: state.isUploading,
+                    onPressed: () async {
+                      final AskSheetResult? result =
+                          await controller.createResult();
+                      if (result == null && !state.isUploading) {
+                        AppMessaging.showWarning(
+                          context,
+                          'Please fill all required fields correctly.',
+                        );
+                        return;
+                      }
 
-                  //     if (result != null && context.mounted) {
-                  //       Navigator.of(context).pop(result);
-                  //     }
-                  //   },
-                  // ),
+                      if (result != null && context.mounted) {
+                        Navigator.of(context).pop(result);
+                      }
+                    },
+                  ),
                 ],
               ),
             ),

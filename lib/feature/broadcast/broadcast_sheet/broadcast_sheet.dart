@@ -44,7 +44,9 @@ class _BroadcastSheetState extends ConsumerState<BroadcastSheet> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(broadcastSheetControllerProvider.notifier).initialize(
+      ref
+          .read(broadcastSheetControllerProvider.notifier)
+          .initialize(
             initialTargetLocation: widget.initialTargetLocation,
             initialLocationName: widget.initialTargetLocationName,
           );
@@ -114,20 +116,20 @@ class _BroadcastSheetState extends ConsumerState<BroadcastSheet> {
                       children: [
                         Text(
                           'Create Broadcast',
-                          style:
-                              Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: -0.5,
-                                  ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5,
+                              ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           'Notify nearby people with timely local updates.',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: onSurface.withOpacity(0.55),
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: onSurface.withOpacity(0.55),
+                                fontWeight: FontWeight.w500,
+                              ),
                         ),
                       ],
                     ),
@@ -153,14 +155,15 @@ class _BroadcastSheetState extends ConsumerState<BroadcastSheet> {
                   Text(
                     'People radius in meters (${state.radiusMeters})',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   Slider(
                     value: state.radiusMeters.toDouble(),
                     min: BroadcastSheetController.minRadiusMeters.toDouble(),
                     max: BroadcastSheetController.maxRadiusMeters.toDouble(),
-                    divisions: (BroadcastSheetController.maxRadiusMeters -
+                    divisions:
+                        (BroadcastSheetController.maxRadiusMeters -
                             BroadcastSheetController.minRadiusMeters) ~/
                         50,
                     label: '${state.radiusMeters}m',
@@ -185,18 +188,20 @@ class _BroadcastSheetState extends ConsumerState<BroadcastSheet> {
                     validator: controller.validateQuestion,
                   ),
                   const SizedBox(height: 16),
-                  _ImagePickerWidget(
-                    image: state.image,
-                    onPick: () => _showImageSourceOptions(context, controller),
-                    onRemove: controller.removeImage,
-                  ),
-                  const SizedBox(height: 20),
+                  // _ImagePickerWidget(
+                  //   image: state.image,
+                  //   onPick: () => _showImageSourceOptions(context, controller),
+                  //   onRemove: controller.removeImage,
+                  // ),
+                  // const SizedBox(height: 20),
                   CustomButtonWidget(
-                    label: state.isUploading ? 'Uploading Image...' : 'Post Broadcast',
+                    label: state.isUploading
+                        ? 'Uploading Image...'
+                        : 'Post Broadcast',
                     isLoading: state.isUploading,
                     onPressed: () async {
-                      final BroadcastSheetResult? result =
-                          await controller.createResult();
+                      final BroadcastSheetResult? result = await controller
+                          .createResult();
                       if (result == null && !state.isUploading) {
                         AppMessaging.showWarning(
                           context,
@@ -300,11 +305,7 @@ class _ImagePickerWidget extends StatelessWidget {
                   color: Colors.red,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.close,
-                  color: Colors.white,
-                  size: 18,
-                ),
+                child: const Icon(Icons.close, color: Colors.white, size: 18),
               ),
             ),
           ),
@@ -320,10 +321,7 @@ class _ImagePickerWidget extends StatelessWidget {
         decoration: BoxDecoration(
           color: surface.withOpacity(0.5),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: primary.withOpacity(0.3),
-            width: 1.5,
-          ),
+          border: Border.all(color: primary.withOpacity(0.3), width: 1.5),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
